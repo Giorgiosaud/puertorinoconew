@@ -25,7 +25,7 @@
 			<nav class="nav">
 				<div class="nav-left">
 					<a class="nav-item">
-					<img src="/img/logo.png" alt="Logo puertorinoco">
+						<img src="/img/logo.png" alt="Logo puertorinoco">
 					</a>
 				</div>
 
@@ -58,36 +58,25 @@
 				<!-- This "nav-menu" is hidden on mobile -->
 				<!-- Add the modifier "is-active" to display it on mobile -->
 				<div class="nav-right nav-menu">
-					<a class="nav-item">
-						Home
+					<a class="nav-item" href="http://puertorinoco.com">
+						Webisite
 					</a>
-					<a class="nav-item">
-						Documentation
+					@if(Auth::guest())
+					<a href="/auth/login" class="nav-item">
+						Log In
 					</a>
-					<a class="nav-item">
-						Blog
+					<a href="/auth/register" class="nav-item">
+						Register
 					</a>
-
-					<div class="nav-item">
-						<div class="field is-grouped">
-							<p class="control">
-								<a class="button" >
-									<span class="icon">
-										<i class="fa fa-twitter"></i>
-									</span>
-									<span>Tweet</span>
-								</a>
-							</p>
-							<p class="control">
-								<a class="button is-primary">
-									<span class="icon">
-										<i class="fa fa-download"></i>
-									</span>
-									<span>Download</span>
-								</a>
-							</p>
-						</div>
-					</div>
+					@else
+					<a class="nav-item is-tab">
+						<figure class="image is-16x16" style="margin-right: 8px;">
+							<img src="https://www.gravatar.com/avatar/{{md5( strtolower( trim( Auth::user()->email ) ) )}}?s=16.jpg">
+						</figure>
+						{{ Auth::user()->name }}
+					</a>
+					<a href="/auth/logout" class="nav-item is-tab">Log out</a>
+					@endif
 				</div>
 			</nav>
 			@yield('content')
