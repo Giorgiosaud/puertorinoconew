@@ -24,18 +24,20 @@
 			<form class="form-horizontal" role="form" method="POST" action="{{ route('login') }}">
 				{{ csrf_field() }}
 
-				<div class="form-group{{ $errors->has('email') ? ' has-error' : '' }}">
-					<label for="email" class="col-md-4 control-label">E-Mail Address</label>
+				
 
-					<div class="col-md-6">
-						<input id="email" type="email" class="form-control" name="email" value="{{ old('email') }}" required autofocus>
-
-						@if ($errors->has('email'))
-						<span class="help-block">
-							<strong>{{ $errors->first('email') }}</strong>
+				<div class="field">
+					<label class="label">E-Mail Address</label>
+					<p class="control has-icons-left has-icons-right">
+					<input id="email" class="input {{ $errors->has('email') ? 'is-danger' : '' }} " type="email" placeholder="Email input" value="{{ old('email') }}" required autofocus>
+						<span class="icon is-small is-left">
+							<i class="fa fa-envelope"></i>
 						</span>
-						@endif
-					</div>
+						<span class="icon is-small is-right">
+							<i class="fa fa-warning"></i>
+						</span>
+					</p>
+					<p class="help is-danger">{{ $errors->first('email') }}/p>
 				</div>
 
 				<div class="form-group{{ $errors->has('password') ? ' has-error' : '' }}">
