@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<section class="hero is-success is-fullheight">
+<section class="hero is-success is-large">
   <div class="hero-body">
     <div class="container">
       <h1 class="title">
