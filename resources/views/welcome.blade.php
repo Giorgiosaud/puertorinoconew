@@ -1,17 +1,16 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
-    <div class="row">
-        <div class="col-md-8 col-md-offset-2">
-            <div class="panel panel-default">
-                <div class="panel-heading">Home</div>
-
-                <div class="panel-body">
-                    Home!!
-                </div>
-            </div>
-        </div>
+<section class="hero is-success is-fullheight">
+  <div class="hero-body">
+    <div class="container">
+      <h1 class="title">
+        Inicio
+      </h1>
+      <h2 class="subtitle">
+        Bienvenidos
+      </h2>
     </div>
-</div>
+  </div>
+</section>
 @endsection
