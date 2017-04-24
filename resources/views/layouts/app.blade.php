@@ -30,12 +30,17 @@
 				</div>
 
 				<div class="nav-center">
-					<a class="nav-item">
+					<a href="https://www.facebook.com/puertorinoco" class="nav-item">
 						<span class="icon">
-							<i class="fa fa-github"></i>
+							<i class="fa fa-facebook"></i>
 						</span>
 					</a>
-					<a class="nav-item">
+					<a class="nav-item" href="http://instagram.com/puertorinoco/">
+						<span class="icon">
+							<i class="fa fa-instagram"></i>
+						</span>
+					</a>
+					<a class="nav-item" href="http://twitter.com/puertorinoco">
 						<span class="icon">
 							<i class="fa fa-twitter"></i>
 						</span>
