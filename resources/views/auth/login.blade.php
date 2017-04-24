@@ -2,7 +2,7 @@
 
 @section('content')
 
-<section class="hero">
+<section class="hero is-success">
 	<div class="hero-body">
 		<div class="container">
 			<h1 class="title">
@@ -14,13 +14,9 @@
 		</div>
 	</div>
 </section>
-<section class="section">
+<section class="hero is-primary">
 	<div class="container">
 		<div class="heading">
-			<h1 class="title">Log In Form</h1>
-			<h2 class="subtitle">
-				A simple container to divide your page into <strong>sections</strong>, like the one you're currently reading
-			</h2>
 			<form class="form-horizontal" role="form" method="POST" action="{{ route('login') }}">
 				{{ csrf_field() }}
 
