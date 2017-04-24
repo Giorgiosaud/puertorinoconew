@@ -14,7 +14,7 @@
 		</div>
 	</div>
 </section>
-<section class="hero is-primary">
+<section class="hero is-success">
 	<div class="container">
 		<div class="heading">
 			<form class="form-horizontal" role="form" method="POST" action="{{ route('login') }}">
