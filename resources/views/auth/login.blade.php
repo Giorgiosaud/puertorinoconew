@@ -29,18 +29,18 @@
 				<div class="field">
 					<label class="label">E-Mail Address</label>
 					<p class="control has-icons-left has-icons-right">
-						<input id="email" class="input {{ $errors->has('email') ? 'is-danger' : '' }} " type="email" placeholder="Email input" value="{{ old('email') }}" required autofocus>
+						<input  class="input {{ $errors->has('login') ? 'is-danger' : '' }} " type="text" name="login" placeholder="Email input" value="{{ old('login') }}" required autofocus>
 						<span class="icon is-small is-left">
 							<i class="fa fa-envelope"></i>
 						</span>
-						@if($errors->has('email'))
+						@if($errors->has('login'))
 						<span class="icon is-small is-right">
 							<i class="fa fa-warning"></i>
 						</span>
 						@endif
 					</p>
-					@if($errors->has('email'))
-					<p class="help is-danger">{{ $errors->first('email') }}</p>
+					@if($errors->has('login'))
+					<p class="help is-danger">{{ $errors->first('login') }}</p>
 					@endif
 				</div>
 				<div class="field">
