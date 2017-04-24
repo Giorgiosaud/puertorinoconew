@@ -62,10 +62,10 @@
 						Webisite
 					</a>
 					@if(Auth::guest())
-					<a href="/auth/login" class="nav-item">
+					<a href="/login" class="nav-item">
 						Log In
 					</a>
-					<a href="/auth/register" class="nav-item">
+					<a href="/register" class="nav-item">
 						Register
 					</a>
 					@else
@@ -75,7 +75,7 @@
 						</figure>
 						{{ Auth::user()->name }}
 					</a>
-					<a href="/auth/logout" class="nav-item is-tab">Log out</a>
+					<a href="/logout" class="nav-item is-tab">Log out</a>
 					@endif
 				</div>
 			</nav>
