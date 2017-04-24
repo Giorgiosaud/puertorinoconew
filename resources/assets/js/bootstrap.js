@@ -1,5 +1,5 @@
-import Vue from 'vue'l
-import Axios from 'axios'l
+import Vue from 'vue';
+import Axios from 'axios';
 window.Vue=Vue;
 window.axios=axios;
 
