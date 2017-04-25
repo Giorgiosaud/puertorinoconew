@@ -53,6 +53,7 @@ class RegisterController extends Controller
             'usuario' => 'required|max:255|unique:users',
             'password' => 'required|min:6|confirmed',
         ]);
+        dd($data);
     }
 
     /**
