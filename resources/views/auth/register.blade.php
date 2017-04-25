@@ -74,7 +74,7 @@
 				<div class="field">
 					<label class="label">Clave</label>
 					<p class="control">
-						<input class="input {{ $errors->has('password') ? 'is-danger' : '' }}" type="password" placeholder="Password" name="password">
+						<input class="input {{ $errors->has('password') ? 'is-danger' : '' }}" type="password" placeholder="Clave" name="password">
 					</p>
 					@if($errors->has('password'))
 					<p class="help is-danger">{{ $errors->first('password') }}</p>
@@ -83,7 +83,7 @@
 				<div class="field">
 					<label class="label">Confirmacion de Clave</label>
 					<p class="control">
-						<input class="input {{ $errors->has('password_confirmation') ? 'is-danger' : '' }}" type="password" placeholder="Confirmacion de Password" name="password_confirmation">
+						<input class="input {{ $errors->has('password_confirmation') ? 'is-danger' : '' }}" type="password" placeholder="Confirmacion de Clave" name="password_confirmation">
 					</p>
 					@if($errors->has('password_confirmation'))
 					<p class="help is-danger">{{ $errors->first('password_confirmation') }}</p>
