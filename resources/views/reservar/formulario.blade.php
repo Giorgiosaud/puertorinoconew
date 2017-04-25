@@ -1,4 +1,4 @@
 @extends('layouts.app')
 @section('content')
-<formularioDeReservas></formularioDeReservas>
+<formulario-de-reservas></formulario-de-reservas>
 @endsection
