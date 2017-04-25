@@ -14,7 +14,7 @@
 Route::get('/', function () {
     return view('welcome');
 });
-Route::resource('formulario','formularioController');
+Route::resource('formulario','FormularioController');
 
 Auth::routes();
 
