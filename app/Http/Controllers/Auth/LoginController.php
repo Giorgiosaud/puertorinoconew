@@ -20,10 +20,10 @@ class LoginController extends Controller
     |
     */
 
-    // use AuthenticatesUsers;
-    public function login(Request $request){
-        dd($request);
-    }
+    use AuthenticatesUsers;
+    // public function login(Request $request){
+        // dd($request);
+    // }
 
     /**
      * Where to redirect users after login.
