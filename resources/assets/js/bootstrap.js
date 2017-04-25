@@ -5,8 +5,8 @@ window.axios=axios;
 
 
 window.$ = window.jQuery = require('jquery');
-
-require('bootstrap-sass');
+require('air-datepicker');
+// require('bootstrap-sass');
 
 /**
  * Vue is a modern JavaScript library for building interactive web interfaces

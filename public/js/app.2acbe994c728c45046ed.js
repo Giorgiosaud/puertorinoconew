@@ -68,6 +68,2276 @@
 /************************************************************************/
 /******/ ({
 
+/***/ "./node_modules/air-datepicker/src/js/air-datepicker.js":
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__("./node_modules/air-datepicker/src/js/datepicker.js");
+__webpack_require__("./node_modules/air-datepicker/src/js/body.js");
+__webpack_require__("./node_modules/air-datepicker/src/js/navigation.js");
+__webpack_require__("./node_modules/air-datepicker/src/js/timepicker.js");
+
+/***/ }),
+
+/***/ "./node_modules/air-datepicker/src/js/body.js":
+/***/ (function(module, exports) {
+
+;(function () {
+    var templates = {
+        days:'' +
+        '<div class="datepicker--days datepicker--body">' +
+        '<div class="datepicker--days-names"></div>' +
+        '<div class="datepicker--cells datepicker--cells-days"></div>' +
+        '</div>',
+        months: '' +
+        '<div class="datepicker--months datepicker--body">' +
+        '<div class="datepicker--cells datepicker--cells-months"></div>' +
+        '</div>',
+        years: '' +
+        '<div class="datepicker--years datepicker--body">' +
+        '<div class="datepicker--cells datepicker--cells-years"></div>' +
+        '</div>'
+        },
+        datepicker = $.fn.datepicker,
+        dp = datepicker.Constructor;
+
+    datepicker.Body = function (d, type, opts) {
+        this.d = d;
+        this.type = type;
+        this.opts = opts;
+        this.$el = $('');
+
+        if (this.opts.onlyTimepicker) return;
+        this.init();
+    };
+
+    datepicker.Body.prototype = {
+        init: function () {
+            this._buildBaseHtml();
+            this._render();
+
+            this._bindEvents();
+        },
+
+        _bindEvents: function () {
+            this.$el.on('click', '.datepicker--cell', $.proxy(this._onClickCell, this));
+        },
+
+        _buildBaseHtml: function () {
+            this.$el = $(templates[this.type]).appendTo(this.d.$content);
+            this.$names = $('.datepicker--days-names', this.$el);
+            this.$cells = $('.datepicker--cells', this.$el);
+        },
+
+        _getDayNamesHtml: function (firstDay, curDay, html, i) {
+            curDay = curDay != undefined ? curDay : firstDay;
+            html = html ? html : '';
+            i = i != undefined ? i : 0;
+
+            if (i > 7) return html;
+            if (curDay == 7) return this._getDayNamesHtml(firstDay, 0, html, ++i);
+
+            html += '<div class="datepicker--day-name' + (this.d.isWeekend(curDay) ? " -weekend-" : "") + '">' + this.d.loc.daysMin[curDay] + '</div>';
+
+            return this._getDayNamesHtml(firstDay, ++curDay, html, ++i);
+        },
+
+        _getCellContents: function (date, type) {
+            var classes = "datepicker--cell datepicker--cell-" + type,
+                currentDate = new Date(),
+                parent = this.d,
+                minRange = dp.resetTime(parent.minRange),
+                maxRange = dp.resetTime(parent.maxRange),
+                opts = parent.opts,
+                d = dp.getParsedDate(date),
+                render = {},
+                html = d.date;
+
+            switch (type) {
+                case 'day':
+                    if (parent.isWeekend(d.day)) classes += " -weekend-";
+                    if (d.month != this.d.parsedDate.month) {
+                        classes += " -other-month-";
+                        if (!opts.selectOtherMonths) {
+                            classes += " -disabled-";
+                        }
+                        if (!opts.showOtherMonths) html = '';
+                    }
+                    break;
+                case 'month':
+                    html = parent.loc[parent.opts.monthsField][d.month];
+                    break;
+                case 'year':
+                    var decade = parent.curDecade;
+                    html = d.year;
+                    if (d.year < decade[0] || d.year > decade[1]) {
+                        classes += ' -other-decade-';
+                        if (!opts.selectOtherYears) {
+                            classes += " -disabled-";
+                        }
+                        if (!opts.showOtherYears) html = '';
+                    }
+                    break;
+            }
+
+            if (opts.onRenderCell) {
+                render = opts.onRenderCell(date, type) || {};
+                html = render.html ? render.html : html;
+                classes += render.classes ? ' ' + render.classes : '';
+            }
+
+            if (opts.range) {
+                if (dp.isSame(minRange, date, type)) classes += ' -range-from-';
+                if (dp.isSame(maxRange, date, type)) classes += ' -range-to-';
+
+                if (parent.selectedDates.length == 1 && parent.focused) {
+                    if (
+                        (dp.bigger(minRange, date) && dp.less(parent.focused, date)) ||
+                        (dp.less(maxRange, date) && dp.bigger(parent.focused, date)))
+                    {
+                        classes += ' -in-range-'
+                    }
+
+                    if (dp.less(maxRange, date) && dp.isSame(parent.focused, date)) {
+                        classes += ' -range-from-'
+                    }
+                    if (dp.bigger(minRange, date) && dp.isSame(parent.focused, date)) {
+                        classes += ' -range-to-'
+                    }
+
+                } else if (parent.selectedDates.length == 2) {
+                    if (dp.bigger(minRange, date) && dp.less(maxRange, date)) {
+                        classes += ' -in-range-'
+                    }
+                }
+            }
+
+
+            if (dp.isSame(currentDate, date, type)) classes += ' -current-';
+            if (parent.focused && dp.isSame(date, parent.focused, type)) classes += ' -focus-';
+            if (parent._isSelected(date, type)) classes += ' -selected-';
+            if (!parent._isInRange(date, type) || render.disabled) classes += ' -disabled-';
+
+            return {
+                html: html,
+                classes: classes
+            }
+        },
+
+        /**
+         * Calculates days number to render. Generates days html and returns it.
+         * @param {object} date - Date object
+         * @returns {string}
+         * @private
+         */
+        _getDaysHtml: function (date) {
+            var totalMonthDays = dp.getDaysCount(date),
+                firstMonthDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay(),
+                lastMonthDay = new Date(date.getFullYear(), date.getMonth(), totalMonthDays).getDay(),
+                daysFromPevMonth = firstMonthDay - this.d.loc.firstDay,
+                daysFromNextMonth = 6 - lastMonthDay + this.d.loc.firstDay;
+
+            daysFromPevMonth = daysFromPevMonth < 0 ? daysFromPevMonth + 7 : daysFromPevMonth;
+            daysFromNextMonth = daysFromNextMonth > 6 ? daysFromNextMonth - 7 : daysFromNextMonth;
+
+            var startDayIndex = -daysFromPevMonth + 1,
+                m, y,
+                html = '';
+
+            for (var i = startDayIndex, max = totalMonthDays + daysFromNextMonth; i <= max; i++) {
+                y = date.getFullYear();
+                m = date.getMonth();
+
+                html += this._getDayHtml(new Date(y, m, i))
+            }
+
+            return html;
+        },
+
+        _getDayHtml: function (date) {
+           var content = this._getCellContents(date, 'day');
+
+            return '<div class="' + content.classes + '" ' +
+                'data-date="' + date.getDate() + '" ' +
+                'data-month="' + date.getMonth() + '" ' +
+                'data-year="' + date.getFullYear() + '">' + content.html + '</div>';
+        },
+
+        /**
+         * Generates months html
+         * @param {object} date - date instance
+         * @returns {string}
+         * @private
+         */
+        _getMonthsHtml: function (date) {
+            var html = '',
+                d = dp.getParsedDate(date),
+                i = 0;
+
+            while(i < 12) {
+                html += this._getMonthHtml(new Date(d.year, i));
+                i++
+            }
+
+            return html;
+        },
+
+        _getMonthHtml: function (date) {
+            var content = this._getCellContents(date, 'month');
+
+            return '<div class="' + content.classes + '" data-month="' + date.getMonth() + '">' + content.html + '</div>'
+        },
+
+        _getYearsHtml: function (date) {
+            var d = dp.getParsedDate(date),
+                decade = dp.getDecade(date),
+                firstYear = decade[0] - 1,
+                html = '',
+                i = firstYear;
+
+            for (i; i <= decade[1] + 1; i++) {
+                html += this._getYearHtml(new Date(i , 0));
+            }
+
+            return html;
+        },
+
+        _getYearHtml: function (date) {
+            var content = this._getCellContents(date, 'year');
+
+            return '<div class="' + content.classes + '" data-year="' + date.getFullYear() + '">' + content.html + '</div>'
+        },
+
+        _renderTypes: {
+            days: function () {
+                var dayNames = this._getDayNamesHtml(this.d.loc.firstDay),
+                    days = this._getDaysHtml(this.d.currentDate);
+
+                this.$cells.html(days);
+                this.$names.html(dayNames)
+            },
+            months: function () {
+                var html = this._getMonthsHtml(this.d.currentDate);
+
+                this.$cells.html(html)
+            },
+            years: function () {
+                var html = this._getYearsHtml(this.d.currentDate);
+
+                this.$cells.html(html)
+            }
+        },
+
+        _render: function () {
+            if (this.opts.onlyTimepicker) return;
+            this._renderTypes[this.type].bind(this)();
+        },
+
+        _update: function () {
+            var $cells = $('.datepicker--cell', this.$cells),
+                _this = this,
+                classes,
+                $cell,
+                date;
+            $cells.each(function (cell, i) {
+                $cell = $(this);
+                date = _this.d._getDateFromCell($(this));
+                classes = _this._getCellContents(date, _this.d.cellType);
+                $cell.attr('class',classes.classes)
+            });
+        },
+
+        show: function () {
+            if (this.opts.onlyTimepicker) return;
+            this.$el.addClass('active');
+            this.acitve = true;
+        },
+
+        hide: function () {
+            this.$el.removeClass('active');
+            this.active = false;
+        },
+
+        //  Events
+        // -------------------------------------------------
+
+        _handleClick: function (el) {
+            var date = el.data('date') || 1,
+                month = el.data('month') || 0,
+                year = el.data('year') || this.d.parsedDate.year,
+                dp = this.d;
+            // Change view if min view does not reach yet
+            if (dp.view != this.opts.minView) {
+                dp.down(new Date(year, month, date));
+                return;
+            }
+            // Select date if min view is reached
+            var selectedDate = new Date(year, month, date),
+                alreadySelected = this.d._isSelected(selectedDate, this.d.cellType);
+
+            if (!alreadySelected) {
+                dp._trigger('clickCell', selectedDate);
+                return;
+            }
+
+            dp._handleAlreadySelectedDates.bind(dp, alreadySelected, selectedDate)();
+
+        },
+
+        _onClickCell: function (e) {
+            var $el = $(e.target).closest('.datepicker--cell');
+
+            if ($el.hasClass('-disabled-')) return;
+
+            this._handleClick.bind(this)($el);
+        }
+    };
+})();
+
+
+/***/ }),
+
+/***/ "./node_modules/air-datepicker/src/js/datepicker.js":
+/***/ (function(module, exports) {
+
+;(function () {
+    var VERSION = '2.2.3',
+        pluginName = 'datepicker',
+        autoInitSelector = '.datepicker-here',
+        $body, $datepickersContainer,
+        containerBuilt = false,
+        baseTemplate = '' +
+            '<div class="datepicker">' +
+            '<i class="datepicker--pointer"></i>' +
+            '<nav class="datepicker--nav"></nav>' +
+            '<div class="datepicker--content"></div>' +
+            '</div>',
+        defaults = {
+            classes: '',
+            inline: false,
+            language: 'ru',
+            startDate: new Date(),
+            firstDay: '',
+            weekends: [6, 0],
+            dateFormat: '',
+            altField: '',
+            altFieldDateFormat: '@',
+            toggleSelected: true,
+            keyboardNav: true,
+
+            position: 'bottom left',
+            offset: 12,
+
+            view: 'days',
+            minView: 'days',
+
+            showOtherMonths: true,
+            selectOtherMonths: true,
+            moveToOtherMonthsOnSelect: true,
+
+            showOtherYears: true,
+            selectOtherYears: true,
+            moveToOtherYearsOnSelect: true,
+
+            minDate: '',
+            maxDate: '',
+            disableNavWhenOutOfRange: true,
+
+            multipleDates: false, // Boolean or Number
+            multipleDatesSeparator: ',',
+            range: false,
+
+            todayButton: false,
+            clearButton: false,
+
+            showEvent: 'focus',
+            autoClose: false,
+
+            // navigation
+            monthsField: 'monthsShort',
+            prevHtml: '<svg><path d="M 17,12 l -5,5 l 5,5"></path></svg>',
+            nextHtml: '<svg><path d="M 14,12 l 5,5 l -5,5"></path></svg>',
+            navTitles: {
+                days: 'MM, <i>yyyy</i>',
+                months: 'yyyy',
+                years: 'yyyy1 - yyyy2'
+            },
+
+            // timepicker
+            timepicker: false,
+            onlyTimepicker: false,
+            dateTimeSeparator: ' ',
+            timeFormat: '',
+            minHours: 0,
+            maxHours: 24,
+            minMinutes: 0,
+            maxMinutes: 59,
+            hoursStep: 1,
+            minutesStep: 1,
+
+            // events
+            onSelect: '',
+            onShow: '',
+            onHide: '',
+            onChangeMonth: '',
+            onChangeYear: '',
+            onChangeDecade: '',
+            onChangeView: '',
+            onRenderCell: ''
+        },
+        hotKeys = {
+            'ctrlRight': [17, 39],
+            'ctrlUp': [17, 38],
+            'ctrlLeft': [17, 37],
+            'ctrlDown': [17, 40],
+            'shiftRight': [16, 39],
+            'shiftUp': [16, 38],
+            'shiftLeft': [16, 37],
+            'shiftDown': [16, 40],
+            'altUp': [18, 38],
+            'altRight': [18, 39],
+            'altLeft': [18, 37],
+            'altDown': [18, 40],
+            'ctrlShiftUp': [16, 17, 38]
+        },
+        datepicker;
+
+    var Datepicker  = function (el, options) {
+        this.el = el;
+        this.$el = $(el);
+
+        this.opts = $.extend(true, {}, defaults, options, this.$el.data());
+
+        if ($body == undefined) {
+            $body = $('body');
+        }
+
+        if (!this.opts.startDate) {
+            this.opts.startDate = new Date();
+        }
+
+        if (this.el.nodeName == 'INPUT') {
+            this.elIsInput = true;
+        }
+
+        if (this.opts.altField) {
+            this.$altField = typeof this.opts.altField == 'string' ? $(this.opts.altField) : this.opts.altField;
+        }
+
+        this.inited = false;
+        this.visible = false;
+        this.silent = false; // Need to prevent unnecessary rendering
+
+        this.currentDate = this.opts.startDate;
+        this.currentView = this.opts.view;
+        this._createShortCuts();
+        this.selectedDates = [];
+        this.views = {};
+        this.keys = [];
+        this.minRange = '';
+        this.maxRange = '';
+        this._prevOnSelectValue = '';
+
+        this.init()
+    };
+
+    datepicker = Datepicker;
+
+    datepicker.prototype = {
+        VERSION: VERSION,
+        viewIndexes: ['days', 'months', 'years'],
+
+        init: function () {
+            if (!containerBuilt && !this.opts.inline && this.elIsInput) {
+                this._buildDatepickersContainer();
+            }
+            this._buildBaseHtml();
+            this._defineLocale(this.opts.language);
+            this._syncWithMinMaxDates();
+
+            if (this.elIsInput) {
+                if (!this.opts.inline) {
+                    // Set extra classes for proper transitions
+                    this._setPositionClasses(this.opts.position);
+                    this._bindEvents()
+                }
+                if (this.opts.keyboardNav && !this.opts.onlyTimepicker) {
+                    this._bindKeyboardEvents();
+                }
+                this.$datepicker.on('mousedown', this._onMouseDownDatepicker.bind(this));
+                this.$datepicker.on('mouseup', this._onMouseUpDatepicker.bind(this));
+            }
+
+            if (this.opts.classes) {
+                this.$datepicker.addClass(this.opts.classes)
+            }
+
+            if (this.opts.timepicker) {
+                this.timepicker = new $.fn.datepicker.Timepicker(this, this.opts);
+                this._bindTimepickerEvents();
+            }
+
+            if (this.opts.onlyTimepicker) {
+                this.$datepicker.addClass('-only-timepicker-');
+            }
+
+            this.views[this.currentView] = new $.fn.datepicker.Body(this, this.currentView, this.opts);
+            this.views[this.currentView].show();
+            this.nav = new $.fn.datepicker.Navigation(this, this.opts);
+            this.view = this.currentView;
+
+            this.$el.on('clickCell.adp', this._onClickCell.bind(this));
+            this.$datepicker.on('mouseenter', '.datepicker--cell', this._onMouseEnterCell.bind(this));
+            this.$datepicker.on('mouseleave', '.datepicker--cell', this._onMouseLeaveCell.bind(this));
+
+            this.inited = true;
+        },
+
+        _createShortCuts: function () {
+            this.minDate = this.opts.minDate ? this.opts.minDate : new Date(-8639999913600000);
+            this.maxDate = this.opts.maxDate ? this.opts.maxDate : new Date(8639999913600000);
+        },
+
+        _bindEvents : function () {
+            this.$el.on(this.opts.showEvent + '.adp', this._onShowEvent.bind(this));
+            this.$el.on('mouseup.adp', this._onMouseUpEl.bind(this));
+            this.$el.on('blur.adp', this._onBlur.bind(this));
+            this.$el.on('keyup.adp', this._onKeyUpGeneral.bind(this));
+            $(window).on('resize.adp', this._onResize.bind(this));
+            $('body').on('mouseup.adp', this._onMouseUpBody.bind(this));
+        },
+
+        _bindKeyboardEvents: function () {
+            this.$el.on('keydown.adp', this._onKeyDown.bind(this));
+            this.$el.on('keyup.adp', this._onKeyUp.bind(this));
+            this.$el.on('hotKey.adp', this._onHotKey.bind(this));
+        },
+
+        _bindTimepickerEvents: function () {
+            this.$el.on('timeChange.adp', this._onTimeChange.bind(this));
+        },
+
+        isWeekend: function (day) {
+            return this.opts.weekends.indexOf(day) !== -1;
+        },
+
+        _defineLocale: function (lang) {
+            if (typeof lang == 'string') {
+                this.loc = $.fn.datepicker.language[lang];
+                if (!this.loc) {
+                    console.warn('Can\'t find language "' + lang + '" in Datepicker.language, will use "ru" instead');
+                    this.loc = $.extend(true, {}, $.fn.datepicker.language.ru)
+                }
+
+                this.loc = $.extend(true, {}, $.fn.datepicker.language.ru, $.fn.datepicker.language[lang])
+            } else {
+                this.loc = $.extend(true, {}, $.fn.datepicker.language.ru, lang)
+            }
+
+            if (this.opts.dateFormat) {
+                this.loc.dateFormat = this.opts.dateFormat
+            }
+
+            if (this.opts.timeFormat) {
+                this.loc.timeFormat = this.opts.timeFormat
+            }
+
+            if (this.opts.firstDay !== '') {
+                this.loc.firstDay = this.opts.firstDay
+            }
+
+            if (this.opts.timepicker) {
+                this.loc.dateFormat = [this.loc.dateFormat, this.loc.timeFormat].join(this.opts.dateTimeSeparator);
+            }
+
+            if (this.opts.onlyTimepicker) {
+                this.loc.dateFormat = this.loc.timeFormat;
+            }
+
+            var boundary = this._getWordBoundaryRegExp;
+            if (this.loc.timeFormat.match(boundary('aa')) ||
+                this.loc.timeFormat.match(boundary('AA'))
+            ) {
+               this.ampm = true;
+            }
+        },
+
+        _buildDatepickersContainer: function () {
+            containerBuilt = true;
+            $body.append('<div class="datepickers-container" id="datepickers-container"></div>');
+            $datepickersContainer = $('#datepickers-container');
+        },
+
+        _buildBaseHtml: function () {
+            var $appendTarget,
+                $inline = $('<div class="datepicker-inline">');
+
+            if(this.el.nodeName == 'INPUT') {
+                if (!this.opts.inline) {
+                    $appendTarget = $datepickersContainer;
+                } else {
+                    $appendTarget = $inline.insertAfter(this.$el)
+                }
+            } else {
+                $appendTarget = $inline.appendTo(this.$el)
+            }
+
+            this.$datepicker = $(baseTemplate).appendTo($appendTarget);
+            this.$content = $('.datepicker--content', this.$datepicker);
+            this.$nav = $('.datepicker--nav', this.$datepicker);
+        },
+
+        _triggerOnChange: function () {
+            if (!this.selectedDates.length) {
+                // Prevent from triggering multiple onSelect callback with same argument (empty string) in IE10-11
+                if (this._prevOnSelectValue === '') return;
+                this._prevOnSelectValue = '';
+                return this.opts.onSelect('', '', this);
+            }
+
+            var selectedDates = this.selectedDates,
+                parsedSelected = datepicker.getParsedDate(selectedDates[0]),
+                formattedDates,
+                _this = this,
+                dates = new Date(
+                    parsedSelected.year,
+                    parsedSelected.month,
+                    parsedSelected.date,
+                    parsedSelected.hours,
+                    parsedSelected.minutes
+                );
+
+                formattedDates = selectedDates.map(function (date) {
+                    return _this.formatDate(_this.loc.dateFormat, date)
+                }).join(this.opts.multipleDatesSeparator);
+
+            // Create new dates array, to separate it from original selectedDates
+            if (this.opts.multipleDates || this.opts.range) {
+                dates = selectedDates.map(function(date) {
+                    var parsedDate = datepicker.getParsedDate(date);
+                    return new Date(
+                        parsedDate.year,
+                        parsedDate.month,
+                        parsedDate.date,
+                        parsedDate.hours,
+                        parsedDate.minutes
+                    );
+                })
+            }
+
+            this._prevOnSelectValue = formattedDates;
+            this.opts.onSelect(formattedDates, dates, this);
+        },
+
+        next: function () {
+            var d = this.parsedDate,
+                o = this.opts;
+            switch (this.view) {
+                case 'days':
+                    this.date = new Date(d.year, d.month + 1, 1);
+                    if (o.onChangeMonth) o.onChangeMonth(this.parsedDate.month, this.parsedDate.year);
+                    break;
+                case 'months':
+                    this.date = new Date(d.year + 1, d.month, 1);
+                    if (o.onChangeYear) o.onChangeYear(this.parsedDate.year);
+                    break;
+                case 'years':
+                    this.date = new Date(d.year + 10, 0, 1);
+                    if (o.onChangeDecade) o.onChangeDecade(this.curDecade);
+                    break;
+            }
+        },
+
+        prev: function () {
+            var d = this.parsedDate,
+                o = this.opts;
+            switch (this.view) {
+                case 'days':
+                    this.date = new Date(d.year, d.month - 1, 1);
+                    if (o.onChangeMonth) o.onChangeMonth(this.parsedDate.month, this.parsedDate.year);
+                    break;
+                case 'months':
+                    this.date = new Date(d.year - 1, d.month, 1);
+                    if (o.onChangeYear) o.onChangeYear(this.parsedDate.year);
+                    break;
+                case 'years':
+                    this.date = new Date(d.year - 10, 0, 1);
+                    if (o.onChangeDecade) o.onChangeDecade(this.curDecade);
+                    break;
+            }
+        },
+
+        formatDate: function (string, date) {
+            date = date || this.date;
+            var result = string,
+                boundary = this._getWordBoundaryRegExp,
+                locale = this.loc,
+                leadingZero = datepicker.getLeadingZeroNum,
+                decade = datepicker.getDecade(date),
+                d = datepicker.getParsedDate(date),
+                fullHours = d.fullHours,
+                hours = d.hours,
+                ampm = string.match(boundary('aa')) || string.match(boundary('AA')),
+                dayPeriod = 'am',
+                replacer = this._replacer,
+                validHours;
+
+            if (this.opts.timepicker && this.timepicker && ampm) {
+                validHours = this.timepicker._getValidHoursFromDate(date, ampm);
+                fullHours = leadingZero(validHours.hours);
+                hours = validHours.hours;
+                dayPeriod = validHours.dayPeriod;
+            }
+
+            switch (true) {
+                case /@/.test(result):
+                    result = result.replace(/@/, date.getTime());
+                case /aa/.test(result):
+                    result = replacer(result, boundary('aa'), dayPeriod);
+                case /AA/.test(result):
+                    result = replacer(result, boundary('AA'), dayPeriod.toUpperCase());
+                case /dd/.test(result):
+                    result = replacer(result, boundary('dd'), d.fullDate);
+                case /d/.test(result):
+                    result = replacer(result, boundary('d'), d.date);
+                case /DD/.test(result):
+                    result = replacer(result, boundary('DD'), locale.days[d.day]);
+                case /D/.test(result):
+                    result = replacer(result, boundary('D'), locale.daysShort[d.day]);
+                case /mm/.test(result):
+                    result = replacer(result, boundary('mm'), d.fullMonth);
+                case /m/.test(result):
+                    result = replacer(result, boundary('m'), d.month + 1);
+                case /MM/.test(result):
+                    result = replacer(result, boundary('MM'), this.loc.months[d.month]);
+                case /M/.test(result):
+                    result = replacer(result, boundary('M'), locale.monthsShort[d.month]);
+                case /ii/.test(result):
+                    result = replacer(result, boundary('ii'), d.fullMinutes);
+                case /i/.test(result):
+                    result = replacer(result, boundary('i'), d.minutes);
+                case /hh/.test(result):
+                    result = replacer(result, boundary('hh'), fullHours);
+                case /h/.test(result):
+                    result = replacer(result, boundary('h'), hours);
+                case /yyyy/.test(result):
+                    result = replacer(result, boundary('yyyy'), d.year);
+                case /yyyy1/.test(result):
+                    result = replacer(result, boundary('yyyy1'), decade[0]);
+                case /yyyy2/.test(result):
+                    result = replacer(result, boundary('yyyy2'), decade[1]);
+                case /yy/.test(result):
+                    result = replacer(result, boundary('yy'), d.year.toString().slice(-2));
+            }
+
+            return result;
+        },
+
+        _replacer: function (str, reg, data) {
+            return str.replace(reg, function (match, p1,p2,p3) {
+                return p1 + data + p3;
+            })
+        },
+
+        _getWordBoundaryRegExp: function (sign) {
+            var symbols = '\\s|\\.|-|/|\\\\|,|\\$|\\!|\\?|:|;';
+
+            return new RegExp('(^|>|' + symbols + ')(' + sign + ')($|<|' + symbols + ')', 'g');
+        },
+
+
+        selectDate: function (date) {
+            var _this = this,
+                opts = _this.opts,
+                d = _this.parsedDate,
+                selectedDates = _this.selectedDates,
+                len = selectedDates.length,
+                newDate = '';
+
+            if (Array.isArray(date)) {
+                date.forEach(function (d) {
+                    _this.selectDate(d)
+                });
+                return;
+            }
+
+            if (!(date instanceof Date)) return;
+
+            this.lastSelectedDate = date;
+
+            // Set new time values from Date
+            if (this.timepicker) {
+                this.timepicker._setTime(date);
+            }
+
+            // On this step timepicker will set valid values in it's instance
+            _this._trigger('selectDate', date);
+
+            // Set correct time values after timepicker's validation
+            // Prevent from setting hours or minutes which values are lesser then `min` value or
+            // greater then `max` value
+            if (this.timepicker) {
+                date.setHours(this.timepicker.hours);
+                date.setMinutes(this.timepicker.minutes)
+            }
+
+            if (_this.view == 'days') {
+                if (date.getMonth() != d.month && opts.moveToOtherMonthsOnSelect) {
+                    newDate = new Date(date.getFullYear(), date.getMonth(), 1);
+                }
+            }
+
+            if (_this.view == 'years') {
+                if (date.getFullYear() != d.year && opts.moveToOtherYearsOnSelect) {
+                    newDate = new Date(date.getFullYear(), 0, 1);
+                }
+            }
+
+            if (newDate) {
+                _this.silent = true;
+                _this.date = newDate;
+                _this.silent = false;
+                _this.nav._render()
+            }
+
+            if (opts.multipleDates && !opts.range) { // Set priority to range functionality
+                if (len === opts.multipleDates) return;
+                if (!_this._isSelected(date)) {
+                    _this.selectedDates.push(date);
+                }
+            } else if (opts.range) {
+                if (len == 2) {
+                    _this.selectedDates = [date];
+                    _this.minRange = date;
+                    _this.maxRange = '';
+                } else if (len == 1) {
+                    _this.selectedDates.push(date);
+                    if (!_this.maxRange){
+                        _this.maxRange = date;
+                    } else {
+                        _this.minRange = date;
+                    }
+                    // Swap dates if they were selected via dp.selectDate() and second date was smaller then first
+                    if (datepicker.bigger(_this.maxRange, _this.minRange)) {
+                        _this.maxRange = _this.minRange;
+                        _this.minRange = date;
+                    }
+                    _this.selectedDates = [_this.minRange, _this.maxRange]
+
+                } else {
+                    _this.selectedDates = [date];
+                    _this.minRange = date;
+                }
+            } else {
+                _this.selectedDates = [date];
+            }
+
+            _this._setInputValue();
+
+            if (opts.onSelect) {
+                _this._triggerOnChange();
+            }
+
+            if (opts.autoClose && !this.timepickerIsActive) {
+                if (!opts.multipleDates && !opts.range) {
+                    _this.hide();
+                } else if (opts.range && _this.selectedDates.length == 2) {
+                    _this.hide();
+                }
+            }
+
+            _this.views[this.currentView]._render()
+        },
+
+        removeDate: function (date) {
+            var selected = this.selectedDates,
+                _this = this;
+
+            if (!(date instanceof Date)) return;
+
+            return selected.some(function (curDate, i) {
+                if (datepicker.isSame(curDate, date)) {
+                    selected.splice(i, 1);
+
+                    if (!_this.selectedDates.length) {
+                        _this.minRange = '';
+                        _this.maxRange = '';
+                        _this.lastSelectedDate = '';
+                    } else {
+                        _this.lastSelectedDate = _this.selectedDates[_this.selectedDates.length - 1];
+                    }
+
+                    _this.views[_this.currentView]._render();
+                    _this._setInputValue();
+
+                    if (_this.opts.onSelect) {
+                        _this._triggerOnChange();
+                    }
+
+                    return true
+                }
+            })
+        },
+
+        today: function () {
+            this.silent = true;
+            this.view = this.opts.minView;
+            this.silent = false;
+            this.date = new Date();
+
+            if (this.opts.todayButton instanceof Date) {
+                this.selectDate(this.opts.todayButton)
+            }
+        },
+
+        clear: function () {
+            this.selectedDates = [];
+            this.minRange = '';
+            this.maxRange = '';
+            this.views[this.currentView]._render();
+            this._setInputValue();
+            if (this.opts.onSelect) {
+                this._triggerOnChange()
+            }
+        },
+
+        /**
+         * Updates datepicker options
+         * @param {String|Object} param - parameter's name to update. If object then it will extend current options
+         * @param {String|Number|Object} [value] - new param value
+         */
+        update: function (param, value) {
+            var len = arguments.length,
+                lastSelectedDate = this.lastSelectedDate;
+
+            if (len == 2) {
+                this.opts[param] = value;
+            } else if (len == 1 && typeof param == 'object') {
+                this.opts = $.extend(true, this.opts, param)
+            }
+
+            this._createShortCuts();
+            this._syncWithMinMaxDates();
+            this._defineLocale(this.opts.language);
+            this.nav._addButtonsIfNeed();
+            if (!this.opts.onlyTimepicker) this.nav._render();
+            this.views[this.currentView]._render();
+
+            if (this.elIsInput && !this.opts.inline) {
+                this._setPositionClasses(this.opts.position);
+                if (this.visible) {
+                    this.setPosition(this.opts.position)
+                }
+            }
+
+            if (this.opts.classes) {
+                this.$datepicker.addClass(this.opts.classes)
+            }
+
+            if (this.opts.onlyTimepicker) {
+                this.$datepicker.addClass('-only-timepicker-');
+            }
+
+            if (this.opts.timepicker) {
+                if (lastSelectedDate) this.timepicker._handleDate(lastSelectedDate);
+                this.timepicker._updateRanges();
+                this.timepicker._updateCurrentTime();
+                // Change hours and minutes if it's values have been changed through min/max hours/minutes
+                if (lastSelectedDate) {
+                    lastSelectedDate.setHours(this.timepicker.hours);
+                    lastSelectedDate.setMinutes(this.timepicker.minutes);
+                }
+            }
+
+            this._setInputValue();
+
+            return this;
+        },
+
+        _syncWithMinMaxDates: function () {
+            var curTime = this.date.getTime();
+            this.silent = true;
+            if (this.minTime > curTime) {
+                this.date = this.minDate;
+            }
+
+            if (this.maxTime < curTime) {
+                this.date = this.maxDate;
+            }
+            this.silent = false;
+        },
+
+        _isSelected: function (checkDate, cellType) {
+            var res = false;
+            this.selectedDates.some(function (date) {
+                if (datepicker.isSame(date, checkDate, cellType)) {
+                    res = date;
+                    return true;
+                }
+            });
+            return res;
+        },
+
+        _setInputValue: function () {
+            var _this = this,
+                opts = _this.opts,
+                format = _this.loc.dateFormat,
+                altFormat = opts.altFieldDateFormat,
+                value = _this.selectedDates.map(function (date) {
+                    return _this.formatDate(format, date)
+                }),
+                altValues;
+
+            if (opts.altField && _this.$altField.length) {
+                altValues = this.selectedDates.map(function (date) {
+                    return _this.formatDate(altFormat, date)
+                });
+                altValues = altValues.join(this.opts.multipleDatesSeparator);
+                this.$altField.val(altValues);
+            }
+
+            value = value.join(this.opts.multipleDatesSeparator);
+
+            this.$el.val(value)
+        },
+
+        /**
+         * Check if date is between minDate and maxDate
+         * @param date {object} - date object
+         * @param type {string} - cell type
+         * @returns {boolean}
+         * @private
+         */
+        _isInRange: function (date, type) {
+            var time = date.getTime(),
+                d = datepicker.getParsedDate(date),
+                min = datepicker.getParsedDate(this.minDate),
+                max = datepicker.getParsedDate(this.maxDate),
+                dMinTime = new Date(d.year, d.month, min.date).getTime(),
+                dMaxTime = new Date(d.year, d.month, max.date).getTime(),
+                types = {
+                    day: time >= this.minTime && time <= this.maxTime,
+                    month: dMinTime >= this.minTime && dMaxTime <= this.maxTime,
+                    year: d.year >= min.year && d.year <= max.year
+                };
+            return type ? types[type] : types.day
+        },
+
+        _getDimensions: function ($el) {
+            var offset = $el.offset();
+
+            return {
+                width: $el.outerWidth(),
+                height: $el.outerHeight(),
+                left: offset.left,
+                top: offset.top
+            }
+        },
+
+        _getDateFromCell: function (cell) {
+            var curDate = this.parsedDate,
+                year = cell.data('year') || curDate.year,
+                month = cell.data('month') == undefined ? curDate.month : cell.data('month'),
+                date = cell.data('date') || 1;
+
+            return new Date(year, month, date);
+        },
+
+        _setPositionClasses: function (pos) {
+            pos = pos.split(' ');
+            var main = pos[0],
+                sec = pos[1],
+                classes = 'datepicker -' + main + '-' + sec + '- -from-' + main + '-';
+
+            if (this.visible) classes += ' active';
+
+            this.$datepicker
+                .removeAttr('class')
+                .addClass(classes);
+        },
+
+        setPosition: function (position) {
+            position = position || this.opts.position;
+
+            var dims = this._getDimensions(this.$el),
+                selfDims = this._getDimensions(this.$datepicker),
+                pos = position.split(' '),
+                top, left,
+                offset = this.opts.offset,
+                main = pos[0],
+                secondary = pos[1];
+
+            switch (main) {
+                case 'top':
+                    top = dims.top - selfDims.height - offset;
+                    break;
+                case 'right':
+                    left = dims.left + dims.width + offset;
+                    break;
+                case 'bottom':
+                    top = dims.top + dims.height + offset;
+                    break;
+                case 'left':
+                    left = dims.left - selfDims.width - offset;
+                    break;
+            }
+
+            switch(secondary) {
+                case 'top':
+                    top = dims.top;
+                    break;
+                case 'right':
+                    left = dims.left + dims.width - selfDims.width;
+                    break;
+                case 'bottom':
+                    top = dims.top + dims.height - selfDims.height;
+                    break;
+                case 'left':
+                    left = dims.left;
+                    break;
+                case 'center':
+                    if (/left|right/.test(main)) {
+                        top = dims.top + dims.height/2 - selfDims.height/2;
+                    } else {
+                        left = dims.left + dims.width/2 - selfDims.width/2;
+                    }
+            }
+
+            this.$datepicker
+                .css({
+                    left: left,
+                    top: top
+                })
+        },
+
+        show: function () {
+            var onShow = this.opts.onShow;
+
+            this.setPosition(this.opts.position);
+            this.$datepicker.addClass('active');
+            this.visible = true;
+
+            if (onShow) {
+                this._bindVisionEvents(onShow)
+            }
+        },
+
+        hide: function () {
+            var onHide = this.opts.onHide;
+
+            this.$datepicker
+                .removeClass('active')
+                .css({
+                    left: '-100000px'
+                });
+
+            this.focused = '';
+            this.keys = [];
+
+            this.inFocus = false;
+            this.visible = false;
+            this.$el.blur();
+
+            if (onHide) {
+                this._bindVisionEvents(onHide)
+            }
+        },
+
+        down: function (date) {
+            this._changeView(date, 'down');
+        },
+
+        up: function (date) {
+            this._changeView(date, 'up');
+        },
+
+        _bindVisionEvents: function (event) {
+            this.$datepicker.off('transitionend.dp');
+            event(this, false);
+            this.$datepicker.one('transitionend.dp', event.bind(this, this, true))
+        },
+
+        _changeView: function (date, dir) {
+            date = date || this.focused || this.date;
+
+            var nextView = dir == 'up' ? this.viewIndex + 1 : this.viewIndex - 1;
+            if (nextView > 2) nextView = 2;
+            if (nextView < 0) nextView = 0;
+
+            this.silent = true;
+            this.date = new Date(date.getFullYear(), date.getMonth(), 1);
+            this.silent = false;
+            this.view = this.viewIndexes[nextView];
+
+        },
+
+        _handleHotKey: function (key) {
+            var date = datepicker.getParsedDate(this._getFocusedDate()),
+                focusedParsed,
+                o = this.opts,
+                newDate,
+                totalDaysInNextMonth,
+                monthChanged = false,
+                yearChanged = false,
+                decadeChanged = false,
+                y = date.year,
+                m = date.month,
+                d = date.date;
+
+            switch (key) {
+                case 'ctrlRight':
+                case 'ctrlUp':
+                    m += 1;
+                    monthChanged = true;
+                    break;
+                case 'ctrlLeft':
+                case 'ctrlDown':
+                    m -= 1;
+                    monthChanged = true;
+                    break;
+                case 'shiftRight':
+                case 'shiftUp':
+                    yearChanged = true;
+                    y += 1;
+                    break;
+                case 'shiftLeft':
+                case 'shiftDown':
+                    yearChanged = true;
+                    y -= 1;
+                    break;
+                case 'altRight':
+                case 'altUp':
+                    decadeChanged = true;
+                    y += 10;
+                    break;
+                case 'altLeft':
+                case 'altDown':
+                    decadeChanged = true;
+                    y -= 10;
+                    break;
+                case 'ctrlShiftUp':
+                    this.up();
+                    break;
+            }
+
+            totalDaysInNextMonth = datepicker.getDaysCount(new Date(y,m));
+            newDate = new Date(y,m,d);
+
+            // If next month has less days than current, set date to total days in that month
+            if (totalDaysInNextMonth < d) d = totalDaysInNextMonth;
+
+            // Check if newDate is in valid range
+            if (newDate.getTime() < this.minTime) {
+                newDate = this.minDate;
+            } else if (newDate.getTime() > this.maxTime) {
+                newDate = this.maxDate;
+            }
+
+            this.focused = newDate;
+
+            focusedParsed = datepicker.getParsedDate(newDate);
+            if (monthChanged && o.onChangeMonth) {
+                o.onChangeMonth(focusedParsed.month, focusedParsed.year)
+            }
+            if (yearChanged && o.onChangeYear) {
+                o.onChangeYear(focusedParsed.year)
+            }
+            if (decadeChanged && o.onChangeDecade) {
+                o.onChangeDecade(this.curDecade)
+            }
+        },
+
+        _registerKey: function (key) {
+            var exists = this.keys.some(function (curKey) {
+                return curKey == key;
+            });
+
+            if (!exists) {
+                this.keys.push(key)
+            }
+        },
+
+        _unRegisterKey: function (key) {
+            var index = this.keys.indexOf(key);
+
+            this.keys.splice(index, 1);
+        },
+
+        _isHotKeyPressed: function () {
+            var currentHotKey,
+                found = false,
+                _this = this,
+                pressedKeys = this.keys.sort();
+
+            for (var hotKey in hotKeys) {
+                currentHotKey = hotKeys[hotKey];
+                if (pressedKeys.length != currentHotKey.length) continue;
+
+                if (currentHotKey.every(function (key, i) { return key == pressedKeys[i]})) {
+                    _this._trigger('hotKey', hotKey);
+                    found = true;
+                }
+            }
+
+            return found;
+        },
+
+        _trigger: function (event, args) {
+            this.$el.trigger(event, args)
+        },
+
+        _focusNextCell: function (keyCode, type) {
+            type = type || this.cellType;
+
+            var date = datepicker.getParsedDate(this._getFocusedDate()),
+                y = date.year,
+                m = date.month,
+                d = date.date;
+
+            if (this._isHotKeyPressed()){
+                return;
+            }
+
+            switch(keyCode) {
+                case 37: // left
+                    type == 'day' ? (d -= 1) : '';
+                    type == 'month' ? (m -= 1) : '';
+                    type == 'year' ? (y -= 1) : '';
+                    break;
+                case 38: // up
+                    type == 'day' ? (d -= 7) : '';
+                    type == 'month' ? (m -= 3) : '';
+                    type == 'year' ? (y -= 4) : '';
+                    break;
+                case 39: // right
+                    type == 'day' ? (d += 1) : '';
+                    type == 'month' ? (m += 1) : '';
+                    type == 'year' ? (y += 1) : '';
+                    break;
+                case 40: // down
+                    type == 'day' ? (d += 7) : '';
+                    type == 'month' ? (m += 3) : '';
+                    type == 'year' ? (y += 4) : '';
+                    break;
+            }
+
+            var nd = new Date(y,m,d);
+            if (nd.getTime() < this.minTime) {
+                nd = this.minDate;
+            } else if (nd.getTime() > this.maxTime) {
+                nd = this.maxDate;
+            }
+
+            this.focused = nd;
+
+        },
+
+        _getFocusedDate: function () {
+            var focused  = this.focused || this.selectedDates[this.selectedDates.length - 1],
+                d = this.parsedDate;
+
+            if (!focused) {
+                switch (this.view) {
+                    case 'days':
+                        focused = new Date(d.year, d.month, new Date().getDate());
+                        break;
+                    case 'months':
+                        focused = new Date(d.year, d.month, 1);
+                        break;
+                    case 'years':
+                        focused = new Date(d.year, 0, 1);
+                        break;
+                }
+            }
+
+            return focused;
+        },
+
+        _getCell: function (date, type) {
+            type = type || this.cellType;
+
+            var d = datepicker.getParsedDate(date),
+                selector = '.datepicker--cell[data-year="' + d.year + '"]',
+                $cell;
+
+            switch (type) {
+                case 'month':
+                    selector = '[data-month="' + d.month + '"]';
+                    break;
+                case 'day':
+                    selector += '[data-month="' + d.month + '"][data-date="' + d.date + '"]';
+                    break;
+            }
+            $cell = this.views[this.currentView].$el.find(selector);
+
+            return $cell.length ? $cell : $('');
+        },
+
+        destroy: function () {
+            var _this = this;
+            _this.$el
+                .off('.adp')
+                .data('datepicker', '');
+
+            _this.selectedDates = [];
+            _this.focused = '';
+            _this.views = {};
+            _this.keys = [];
+            _this.minRange = '';
+            _this.maxRange = '';
+
+            if (_this.opts.inline || !_this.elIsInput) {
+                _this.$datepicker.closest('.datepicker-inline').remove();
+            } else {
+                _this.$datepicker.remove();
+            }
+        },
+
+        _handleAlreadySelectedDates: function (alreadySelected, selectedDate) {
+            if (this.opts.range) {
+                if (!this.opts.toggleSelected) {
+                    // Add possibility to select same date when range is true
+                    if (this.selectedDates.length != 2) {
+                        this._trigger('clickCell', selectedDate);
+                    }
+                } else {
+                    this.removeDate(selectedDate);
+                }
+            } else if (this.opts.toggleSelected){
+                this.removeDate(selectedDate);
+            }
+
+            // Change last selected date to be able to change time when clicking on this cell
+            if (!this.opts.toggleSelected) {
+                this.lastSelectedDate = alreadySelected;
+                if (this.opts.timepicker) {
+                    this.timepicker._setTime(alreadySelected);
+                    this.timepicker.update();
+                }
+            }
+        },
+
+        _onShowEvent: function (e) {
+            if (!this.visible) {
+                this.show();
+            }
+        },
+
+        _onBlur: function () {
+            if (!this.inFocus && this.visible) {
+                this.hide();
+            }
+        },
+
+        _onMouseDownDatepicker: function (e) {
+            this.inFocus = true;
+        },
+
+        _onMouseUpDatepicker: function (e) {
+            this.inFocus = false;
+            e.originalEvent.inFocus = true;
+            if (!e.originalEvent.timepickerFocus) this.$el.focus();
+        },
+
+        _onKeyUpGeneral: function (e) {
+            var val = this.$el.val();
+
+            if (!val) {
+                this.clear();
+            }
+        },
+
+        _onResize: function () {
+            if (this.visible) {
+                this.setPosition();
+            }
+        },
+
+        _onMouseUpBody: function (e) {
+            if (e.originalEvent.inFocus) return;
+
+            if (this.visible && !this.inFocus) {
+                this.hide();
+            }
+        },
+
+        _onMouseUpEl: function (e) {
+            e.originalEvent.inFocus = true;
+            setTimeout(this._onKeyUpGeneral.bind(this),4);
+        },
+
+        _onKeyDown: function (e) {
+            var code = e.which;
+            this._registerKey(code);
+
+            // Arrows
+            if (code >= 37 && code <= 40) {
+                e.preventDefault();
+                this._focusNextCell(code);
+            }
+
+            // Enter
+            if (code == 13) {
+                if (this.focused) {
+                    if (this._getCell(this.focused).hasClass('-disabled-')) return;
+                    if (this.view != this.opts.minView) {
+                        this.down()
+                    } else {
+                        var alreadySelected = this._isSelected(this.focused, this.cellType);
+
+                        if (!alreadySelected) {
+                            if (this.timepicker) {
+                                this.focused.setHours(this.timepicker.hours);
+                                this.focused.setMinutes(this.timepicker.minutes);
+                            }
+                            this.selectDate(this.focused);
+                            return;
+                        }
+                        this._handleAlreadySelectedDates(alreadySelected, this.focused)
+                    }
+                }
+            }
+
+            // Esc
+            if (code == 27) {
+                this.hide();
+            }
+        },
+
+        _onKeyUp: function (e) {
+            var code = e.which;
+            this._unRegisterKey(code);
+        },
+
+        _onHotKey: function (e, hotKey) {
+            this._handleHotKey(hotKey);
+        },
+
+        _onMouseEnterCell: function (e) {
+            var $cell = $(e.target).closest('.datepicker--cell'),
+                date = this._getDateFromCell($cell);
+
+            // Prevent from unnecessary rendering and setting new currentDate
+            this.silent = true;
+
+            if (this.focused) {
+                this.focused = ''
+            }
+
+            $cell.addClass('-focus-');
+
+            this.focused = date;
+            this.silent = false;
+
+            if (this.opts.range && this.selectedDates.length == 1) {
+                this.minRange = this.selectedDates[0];
+                this.maxRange = '';
+                if (datepicker.less(this.minRange, this.focused)) {
+                    this.maxRange = this.minRange;
+                    this.minRange = '';
+                }
+                this.views[this.currentView]._update();
+            }
+        },
+
+        _onMouseLeaveCell: function (e) {
+            var $cell = $(e.target).closest('.datepicker--cell');
+
+            $cell.removeClass('-focus-');
+
+            this.silent = true;
+            this.focused = '';
+            this.silent = false;
+        },
+
+        _onTimeChange: function (e, h, m) {
+            var date = new Date(),
+                selectedDates = this.selectedDates,
+                selected = false;
+
+            if (selectedDates.length) {
+                selected = true;
+                date = this.lastSelectedDate;
+            }
+
+            date.setHours(h);
+            date.setMinutes(m);
+
+            if (!selected && !this._getCell(date).hasClass('-disabled-')) {
+                this.selectDate(date);
+            } else {
+                this._setInputValue();
+                if (this.opts.onSelect) {
+                    this._triggerOnChange();
+                }
+            }
+        },
+
+        _onClickCell: function (e, date) {
+            if (this.timepicker) {
+                date.setHours(this.timepicker.hours);
+                date.setMinutes(this.timepicker.minutes);
+            }
+            this.selectDate(date);
+        },
+
+        set focused(val) {
+            if (!val && this.focused) {
+                var $cell = this._getCell(this.focused);
+
+                if ($cell.length) {
+                    $cell.removeClass('-focus-')
+                }
+            }
+            this._focused = val;
+            if (this.opts.range && this.selectedDates.length == 1) {
+                this.minRange = this.selectedDates[0];
+                this.maxRange = '';
+                if (datepicker.less(this.minRange, this._focused)) {
+                    this.maxRange = this.minRange;
+                    this.minRange = '';
+                }
+            }
+            if (this.silent) return;
+            this.date = val;
+        },
+
+        get focused() {
+            return this._focused;
+        },
+
+        get parsedDate() {
+            return datepicker.getParsedDate(this.date);
+        },
+
+        set date (val) {
+            if (!(val instanceof Date)) return;
+
+            this.currentDate = val;
+
+            if (this.inited && !this.silent) {
+                this.views[this.view]._render();
+                this.nav._render();
+                if (this.visible && this.elIsInput) {
+                    this.setPosition();
+                }
+            }
+            return val;
+        },
+
+        get date () {
+            return this.currentDate
+        },
+
+        set view (val) {
+            this.viewIndex = this.viewIndexes.indexOf(val);
+
+            if (this.viewIndex < 0) {
+                return;
+            }
+
+            this.prevView = this.currentView;
+            this.currentView = val;
+
+            if (this.inited) {
+                if (!this.views[val]) {
+                    this.views[val] = new  $.fn.datepicker.Body(this, val, this.opts)
+                } else {
+                    this.views[val]._render();
+                }
+
+                this.views[this.prevView].hide();
+                this.views[val].show();
+                this.nav._render();
+
+                if (this.opts.onChangeView) {
+                    this.opts.onChangeView(val)
+                }
+                if (this.elIsInput && this.visible) this.setPosition();
+            }
+
+            return val
+        },
+
+        get view() {
+            return this.currentView;
+        },
+
+        get cellType() {
+            return this.view.substring(0, this.view.length - 1)
+        },
+
+        get minTime() {
+            var min = datepicker.getParsedDate(this.minDate);
+            return new Date(min.year, min.month, min.date).getTime()
+        },
+
+        get maxTime() {
+            var max = datepicker.getParsedDate(this.maxDate);
+            return new Date(max.year, max.month, max.date).getTime()
+        },
+
+        get curDecade() {
+            return datepicker.getDecade(this.date)
+        }
+    };
+
+    //  Utils
+    // -------------------------------------------------
+
+    datepicker.getDaysCount = function (date) {
+        return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+    };
+
+    datepicker.getParsedDate = function (date) {
+        return {
+            year: date.getFullYear(),
+            month: date.getMonth(),
+            fullMonth: (date.getMonth() + 1) < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1, // One based
+            date: date.getDate(),
+            fullDate: date.getDate() < 10 ? '0' + date.getDate() : date.getDate(),
+            day: date.getDay(),
+            hours: date.getHours(),
+            fullHours:  date.getHours() < 10 ? '0' + date.getHours() :  date.getHours() ,
+            minutes: date.getMinutes(),
+            fullMinutes:  date.getMinutes() < 10 ? '0' + date.getMinutes() :  date.getMinutes()
+        }
+    };
+
+    datepicker.getDecade = function (date) {
+        var firstYear = Math.floor(date.getFullYear() / 10) * 10;
+
+        return [firstYear, firstYear + 9];
+    };
+
+    datepicker.template = function (str, data) {
+        return str.replace(/#\{([\w]+)\}/g, function (source, match) {
+            if (data[match] || data[match] === 0) {
+                return data[match]
+            }
+        });
+    };
+
+    datepicker.isSame = function (date1, date2, type) {
+        if (!date1 || !date2) return false;
+        var d1 = datepicker.getParsedDate(date1),
+            d2 = datepicker.getParsedDate(date2),
+            _type = type ? type : 'day',
+
+            conditions = {
+                day: d1.date == d2.date && d1.month == d2.month && d1.year == d2.year,
+                month: d1.month == d2.month && d1.year == d2.year,
+                year: d1.year == d2.year
+            };
+
+        return conditions[_type];
+    };
+
+    datepicker.less = function (dateCompareTo, date, type) {
+        if (!dateCompareTo || !date) return false;
+        return date.getTime() < dateCompareTo.getTime();
+    };
+
+    datepicker.bigger = function (dateCompareTo, date, type) {
+        if (!dateCompareTo || !date) return false;
+        return date.getTime() > dateCompareTo.getTime();
+    };
+
+    datepicker.getLeadingZeroNum = function (num) {
+        return parseInt(num) < 10 ? '0' + num : num;
+    };
+
+    /**
+     * Returns copy of date with hours and minutes equals to 0
+     * @param date {Date}
+     */
+    datepicker.resetTime = function (date) {
+        if (typeof date != 'object') return;
+        date = datepicker.getParsedDate(date);
+        return new Date(date.year, date.month, date.date)
+    };
+
+    $.fn.datepicker = function ( options ) {
+        return this.each(function () {
+            if (!$.data(this, pluginName)) {
+                $.data(this,  pluginName,
+                    new Datepicker( this, options ));
+            } else {
+                var _this = $.data(this, pluginName);
+
+                _this.opts = $.extend(true, _this.opts, options);
+                _this.update();
+            }
+        });
+    };
+
+    $.fn.datepicker.Constructor = Datepicker;
+
+    $.fn.datepicker.language = {
+        ru: {
+            days: ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'],
+            daysShort: ['Вос','Пон','Вто','Сре','Чет','Пят','Суб'],
+            daysMin: ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'],
+            months: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
+            monthsShort: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'],
+            today: 'Сегодня',
+            clear: 'Очистить',
+            dateFormat: 'dd.mm.yyyy',
+            timeFormat: 'hh:ii',
+            firstDay: 1
+        }
+    };
+
+    $(function () {
+        $(autoInitSelector).datepicker();
+    })
+
+})();
+
+
+/***/ }),
+
+/***/ "./node_modules/air-datepicker/src/js/navigation.js":
+/***/ (function(module, exports) {
+
+;(function () {
+    var template = '' +
+        '<div class="datepicker--nav-action" data-action="prev">#{prevHtml}</div>' +
+        '<div class="datepicker--nav-title">#{title}</div>' +
+        '<div class="datepicker--nav-action" data-action="next">#{nextHtml}</div>',
+        buttonsContainerTemplate = '<div class="datepicker--buttons"></div>',
+        button = '<span class="datepicker--button" data-action="#{action}">#{label}</span>',
+        datepicker = $.fn.datepicker,
+        dp = datepicker.Constructor;
+
+    datepicker.Navigation = function (d, opts) {
+        this.d = d;
+        this.opts = opts;
+
+        this.$buttonsContainer = '';
+
+        this.init();
+    };
+
+    datepicker.Navigation.prototype = {
+        init: function () {
+            this._buildBaseHtml();
+            this._bindEvents();
+        },
+
+        _bindEvents: function () {
+            this.d.$nav.on('click', '.datepicker--nav-action', $.proxy(this._onClickNavButton, this));
+            this.d.$nav.on('click', '.datepicker--nav-title', $.proxy(this._onClickNavTitle, this));
+            this.d.$datepicker.on('click', '.datepicker--button', $.proxy(this._onClickNavButton, this));
+        },
+
+        _buildBaseHtml: function () {
+            if (!this.opts.onlyTimepicker) {
+                this._render();
+            }
+            this._addButtonsIfNeed();
+        },
+
+        _addButtonsIfNeed: function () {
+            if (this.opts.todayButton) {
+                this._addButton('today')
+            }
+            if (this.opts.clearButton) {
+                this._addButton('clear')
+            }
+        },
+
+        _render: function () {
+            var title = this._getTitle(this.d.currentDate),
+                html = dp.template(template, $.extend({title: title}, this.opts));
+            this.d.$nav.html(html);
+            if (this.d.view == 'years') {
+                $('.datepicker--nav-title', this.d.$nav).addClass('-disabled-');
+            }
+            this.setNavStatus();
+        },
+
+        _getTitle: function (date) {
+            return this.d.formatDate(this.opts.navTitles[this.d.view], date)
+        },
+
+        _addButton: function (type) {
+            if (!this.$buttonsContainer.length) {
+                this._addButtonsContainer();
+            }
+
+            var data = {
+                    action: type,
+                    label: this.d.loc[type]
+                },
+                html = dp.template(button, data);
+
+            if ($('[data-action=' + type + ']', this.$buttonsContainer).length) return;
+            this.$buttonsContainer.append(html);
+        },
+
+        _addButtonsContainer: function () {
+            this.d.$datepicker.append(buttonsContainerTemplate);
+            this.$buttonsContainer = $('.datepicker--buttons', this.d.$datepicker);
+        },
+
+        setNavStatus: function () {
+            if (!(this.opts.minDate || this.opts.maxDate) || !this.opts.disableNavWhenOutOfRange) return;
+
+            var date = this.d.parsedDate,
+                m = date.month,
+                y = date.year,
+                d = date.date;
+
+            switch (this.d.view) {
+                case 'days':
+                    if (!this.d._isInRange(new Date(y, m-1, 1), 'month')) {
+                        this._disableNav('prev')
+                    }
+                    if (!this.d._isInRange(new Date(y, m+1, 1), 'month')) {
+                        this._disableNav('next')
+                    }
+                    break;
+                case 'months':
+                    if (!this.d._isInRange(new Date(y-1, m, d), 'year')) {
+                        this._disableNav('prev')
+                    }
+                    if (!this.d._isInRange(new Date(y+1, m, d), 'year')) {
+                        this._disableNav('next')
+                    }
+                    break;
+                case 'years':
+                    var decade = dp.getDecade(this.d.date);
+                    if (!this.d._isInRange(new Date(decade[0] - 1, 0, 1), 'year')) {
+                        this._disableNav('prev')
+                    }
+                    if (!this.d._isInRange(new Date(decade[1] + 1, 0, 1), 'year')) {
+                        this._disableNav('next')
+                    }
+                    break;
+            }
+        },
+
+        _disableNav: function (nav) {
+            $('[data-action="' + nav + '"]', this.d.$nav).addClass('-disabled-')
+        },
+
+        _activateNav: function (nav) {
+            $('[data-action="' + nav + '"]', this.d.$nav).removeClass('-disabled-')
+        },
+
+        _onClickNavButton: function (e) {
+            var $el = $(e.target).closest('[data-action]'),
+                action = $el.data('action');
+
+            this.d[action]();
+        },
+
+        _onClickNavTitle: function (e) {
+            if ($(e.target).hasClass('-disabled-')) return;
+
+            if (this.d.view == 'days') {
+                return this.d.view = 'months'
+            }
+
+            this.d.view = 'years';
+        }
+    }
+
+})();
+
+
+/***/ }),
+
+/***/ "./node_modules/air-datepicker/src/js/timepicker.js":
+/***/ (function(module, exports) {
+
+;(function () {
+    var template = '<div class="datepicker--time">' +
+        '<div class="datepicker--time-current">' +
+        '   <span class="datepicker--time-current-hours">#{hourVisible}</span>' +
+        '   <span class="datepicker--time-current-colon">:</span>' +
+        '   <span class="datepicker--time-current-minutes">#{minValue}</span>' +
+        '</div>' +
+        '<div class="datepicker--time-sliders">' +
+        '   <div class="datepicker--time-row">' +
+        '      <input type="range" name="hours" value="#{hourValue}" min="#{hourMin}" max="#{hourMax}" step="#{hourStep}"/>' +
+        '   </div>' +
+        '   <div class="datepicker--time-row">' +
+        '      <input type="range" name="minutes" value="#{minValue}" min="#{minMin}" max="#{minMax}" step="#{minStep}"/>' +
+        '   </div>' +
+        '</div>' +
+        '</div>',
+        datepicker = $.fn.datepicker,
+        dp = datepicker.Constructor;
+
+    datepicker.Timepicker = function (inst, opts) {
+        this.d = inst;
+        this.opts = opts;
+
+        this.init();
+    };
+
+    datepicker.Timepicker.prototype = {
+        init: function () {
+            var input = 'input';
+            this._setTime(this.d.date);
+            this._buildHTML();
+
+            if (navigator.userAgent.match(/trident/gi)) {
+                input = 'change';
+            }
+
+            this.d.$el.on('selectDate', this._onSelectDate.bind(this));
+            this.$ranges.on(input, this._onChangeRange.bind(this));
+            this.$ranges.on('mouseup', this._onMouseUpRange.bind(this));
+            this.$ranges.on('mousemove focus ', this._onMouseEnterRange.bind(this));
+            this.$ranges.on('mouseout blur', this._onMouseOutRange.bind(this));
+        },
+
+        _setTime: function (date) {
+            var _date = dp.getParsedDate(date);
+
+            this._handleDate(date);
+            this.hours = _date.hours < this.minHours ? this.minHours : _date.hours;
+            this.minutes = _date.minutes < this.minMinutes ? this.minMinutes : _date.minutes;
+        },
+
+        /**
+         * Sets minHours and minMinutes from date (usually it's a minDate)
+         * Also changes minMinutes if current hours are bigger then @date hours
+         * @param date {Date}
+         * @private
+         */
+        _setMinTimeFromDate: function (date) {
+            this.minHours = date.getHours();
+            this.minMinutes = date.getMinutes();
+
+            // If, for example, min hours are 10, and current hours are 12,
+            // update minMinutes to default value, to be able to choose whole range of values
+            if (this.d.lastSelectedDate) {
+                if (this.d.lastSelectedDate.getHours() > date.getHours()) {
+                    this.minMinutes = this.opts.minMinutes;
+                }
+            }
+        },
+
+        _setMaxTimeFromDate: function (date) {
+            this.maxHours = date.getHours();
+            this.maxMinutes = date.getMinutes();
+
+            if (this.d.lastSelectedDate) {
+                if (this.d.lastSelectedDate.getHours() < date.getHours()) {
+                    this.maxMinutes = this.opts.maxMinutes;
+                }
+            }
+        },
+
+        _setDefaultMinMaxTime: function () {
+            var maxHours = 23,
+                maxMinutes = 59,
+                opts = this.opts;
+
+            this.minHours = opts.minHours < 0 || opts.minHours > maxHours ? 0 : opts.minHours;
+            this.minMinutes = opts.minMinutes < 0 || opts.minMinutes > maxMinutes ? 0 : opts.minMinutes;
+            this.maxHours = opts.maxHours < 0 || opts.maxHours > maxHours ? maxHours : opts.maxHours;
+            this.maxMinutes = opts.maxMinutes < 0 || opts.maxMinutes > maxMinutes ? maxMinutes : opts.maxMinutes;
+        },
+
+        /**
+         * Looks for min/max hours/minutes and if current values
+         * are out of range sets valid values.
+         * @private
+         */
+        _validateHoursMinutes: function (date) {
+            if (this.hours < this.minHours) {
+                this.hours = this.minHours;
+            } else if (this.hours > this.maxHours) {
+                this.hours = this.maxHours;
+            }
+
+            if (this.minutes < this.minMinutes) {
+                this.minutes = this.minMinutes;
+            } else if (this.minutes > this.maxMinutes) {
+                this.minutes = this.maxMinutes;
+            }
+        },
+
+        _buildHTML: function () {
+            var lz = dp.getLeadingZeroNum,
+                data = {
+                    hourMin: this.minHours,
+                    hourMax: lz(this.maxHours),
+                    hourStep: this.opts.hoursStep,
+                    hourValue: this.hours,
+                    hourVisible: lz(this.displayHours),
+                    minMin: this.minMinutes,
+                    minMax: lz(this.maxMinutes),
+                    minStep: this.opts.minutesStep,
+                    minValue: lz(this.minutes)
+                },
+                _template = dp.template(template, data);
+
+            this.$timepicker = $(_template).appendTo(this.d.$datepicker);
+            this.$ranges = $('[type="range"]', this.$timepicker);
+            this.$hours = $('[name="hours"]', this.$timepicker);
+            this.$minutes = $('[name="minutes"]', this.$timepicker);
+            this.$hoursText = $('.datepicker--time-current-hours', this.$timepicker);
+            this.$minutesText = $('.datepicker--time-current-minutes', this.$timepicker);
+
+            if (this.d.ampm) {
+                this.$ampm = $('<span class="datepicker--time-current-ampm">')
+                    .appendTo($('.datepicker--time-current', this.$timepicker))
+                    .html(this.dayPeriod);
+
+                this.$timepicker.addClass('-am-pm-');
+            }
+        },
+
+        _updateCurrentTime: function () {
+            var h =  dp.getLeadingZeroNum(this.displayHours),
+                m = dp.getLeadingZeroNum(this.minutes);
+
+            this.$hoursText.html(h);
+            this.$minutesText.html(m);
+
+            if (this.d.ampm) {
+                this.$ampm.html(this.dayPeriod);
+            }
+        },
+
+        _updateRanges: function () {
+            this.$hours.attr({
+                min: this.minHours,
+                max: this.maxHours
+            }).val(this.hours);
+
+            this.$minutes.attr({
+                min: this.minMinutes,
+                max: this.maxMinutes
+            }).val(this.minutes)
+        },
+
+        /**
+         * Sets minHours, minMinutes etc. from date. If date is not passed, than sets
+         * values from options
+         * @param [date] {object} - Date object, to get values from
+         * @private
+         */
+        _handleDate: function (date) {
+            this._setDefaultMinMaxTime();
+            if (date) {
+                if (dp.isSame(date, this.d.opts.minDate)) {
+                    this._setMinTimeFromDate(this.d.opts.minDate);
+                } else if (dp.isSame(date, this.d.opts.maxDate)) {
+                    this._setMaxTimeFromDate(this.d.opts.maxDate);
+                }
+            }
+
+            this._validateHoursMinutes(date);
+        },
+
+        update: function () {
+            this._updateRanges();
+            this._updateCurrentTime();
+        },
+
+        /**
+         * Calculates valid hour value to display in text input and datepicker's body.
+         * @param date {Date|Number} - date or hours
+         * @param [ampm] {Boolean} - 12 hours mode
+         * @returns {{hours: *, dayPeriod: string}}
+         * @private
+         */
+        _getValidHoursFromDate: function (date, ampm) {
+            var d = date,
+                hours = date;
+
+            if (date instanceof Date) {
+                d = dp.getParsedDate(date);
+                hours = d.hours;
+            }
+
+            var _ampm = ampm || this.d.ampm,
+                dayPeriod = 'am';
+
+            if (_ampm) {
+                switch(true) {
+                    case hours == 0:
+                        hours = 12;
+                        break;
+                    case hours == 12:
+                        dayPeriod = 'pm';
+                        break;
+                    case hours > 11:
+                        hours = hours - 12;
+                        dayPeriod = 'pm';
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            return {
+                hours: hours,
+                dayPeriod: dayPeriod
+            }
+        },
+
+        set hours (val) {
+            this._hours = val;
+
+            var displayHours = this._getValidHoursFromDate(val);
+
+            this.displayHours = displayHours.hours;
+            this.dayPeriod = displayHours.dayPeriod;
+        },
+
+        get hours() {
+            return this._hours;
+        },
+
+        //  Events
+        // -------------------------------------------------
+
+        _onChangeRange: function (e) {
+            var $target = $(e.target),
+                name = $target.attr('name');
+            
+            this.d.timepickerIsActive = true;
+
+            this[name] = $target.val();
+            this._updateCurrentTime();
+            this.d._trigger('timeChange', [this.hours, this.minutes]);
+
+            this._handleDate(this.d.lastSelectedDate);
+            this.update()
+        },
+
+        _onSelectDate: function (e, data) {
+            this._handleDate(data);
+            this.update();
+        },
+
+        _onMouseEnterRange: function (e) {
+            var name = $(e.target).attr('name');
+            $('.datepicker--time-current-' + name, this.$timepicker).addClass('-focus-');
+        },
+
+        _onMouseOutRange: function (e) {
+            var name = $(e.target).attr('name');
+            if (this.d.inFocus) return; // Prevent removing focus when mouse out of range slider
+            $('.datepicker--time-current-' + name, this.$timepicker).removeClass('-focus-');
+        },
+
+        _onMouseUpRange: function (e) {
+            this.d.timepickerIsActive = false;
+        }
+    };
+})();
+
+
+/***/ }),
+
 /***/ "./node_modules/axios/index.js":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -1636,2387 +3906,33 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 /***/ }),
 
-/***/ "./node_modules/bootstrap-sass/assets/javascripts/bootstrap.js":
-/***/ (function(module, exports) {
+/***/ "./node_modules/babel-loader/lib/index.js?{\"cacheDirectory\":true,\"presets\":[[\"env\",{\"modules\":false,\"targets\":{\"browsers\":[\"> 2%\"],\"uglify\":true}}]]}!./node_modules/vue-loader/lib/selector.js?type=script&index=0!./resources/assets/js/components/FormularioDeReservas.vue":
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
-/*!
- * Bootstrap v3.3.7 (http://getbootstrap.com)
- * Copyright 2011-2016 Twitter, Inc.
- * Licensed under the MIT license
- */
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
-if (typeof jQuery === 'undefined') {
-  throw new Error('Bootstrap\'s JavaScript requires jQuery')
-}
-
-+function ($) {
-  'use strict';
-  var version = $.fn.jquery.split(' ')[0].split('.')
-  if ((version[0] < 2 && version[1] < 9) || (version[0] == 1 && version[1] == 9 && version[2] < 1) || (version[0] > 3)) {
-    throw new Error('Bootstrap\'s JavaScript requires jQuery version 1.9.1 or higher, but lower than version 4')
-  }
-}(jQuery);
-
-/* ========================================================================
- * Bootstrap: transition.js v3.3.7
- * http://getbootstrap.com/javascript/#transitions
- * ========================================================================
- * Copyright 2011-2016 Twitter, Inc.
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
- * ======================================================================== */
-
-
-+function ($) {
-  'use strict';
-
-  // CSS TRANSITION SUPPORT (Shoutout: http://www.modernizr.com/)
-  // ============================================================
-
-  function transitionEnd() {
-    var el = document.createElement('bootstrap')
-
-    var transEndEventNames = {
-      WebkitTransition : 'webkitTransitionEnd',
-      MozTransition    : 'transitionend',
-      OTransition      : 'oTransitionEnd otransitionend',
-      transition       : 'transitionend'
+/* harmony default export */ __webpack_exports__["default"] = ({
+    mounted: function mounted() {
+        console.log('Component mounted.');
     }
-
-    for (var name in transEndEventNames) {
-      if (el.style[name] !== undefined) {
-        return { end: transEndEventNames[name] }
-      }
-    }
-
-    return false // explicit for ie8 (  ._.)
-  }
-
-  // http://blog.alexmaccaw.com/css-transitions
-  $.fn.emulateTransitionEnd = function (duration) {
-    var called = false
-    var $el = this
-    $(this).one('bsTransitionEnd', function () { called = true })
-    var callback = function () { if (!called) $($el).trigger($.support.transition.end) }
-    setTimeout(callback, duration)
-    return this
-  }
-
-  $(function () {
-    $.support.transition = transitionEnd()
-
-    if (!$.support.transition) return
-
-    $.event.special.bsTransitionEnd = {
-      bindType: $.support.transition.end,
-      delegateType: $.support.transition.end,
-      handle: function (e) {
-        if ($(e.target).is(this)) return e.handleObj.handler.apply(this, arguments)
-      }
-    }
-  })
-
-}(jQuery);
-
-/* ========================================================================
- * Bootstrap: alert.js v3.3.7
- * http://getbootstrap.com/javascript/#alerts
- * ========================================================================
- * Copyright 2011-2016 Twitter, Inc.
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
- * ======================================================================== */
-
-
-+function ($) {
-  'use strict';
-
-  // ALERT CLASS DEFINITION
-  // ======================
-
-  var dismiss = '[data-dismiss="alert"]'
-  var Alert   = function (el) {
-    $(el).on('click', dismiss, this.close)
-  }
-
-  Alert.VERSION = '3.3.7'
-
-  Alert.TRANSITION_DURATION = 150
-
-  Alert.prototype.close = function (e) {
-    var $this    = $(this)
-    var selector = $this.attr('data-target')
-
-    if (!selector) {
-      selector = $this.attr('href')
-      selector = selector && selector.replace(/.*(?=#[^\s]*$)/, '') // strip for ie7
-    }
-
-    var $parent = $(selector === '#' ? [] : selector)
-
-    if (e) e.preventDefault()
-
-    if (!$parent.length) {
-      $parent = $this.closest('.alert')
-    }
-
-    $parent.trigger(e = $.Event('close.bs.alert'))
-
-    if (e.isDefaultPrevented()) return
-
-    $parent.removeClass('in')
-
-    function removeElement() {
-      // detach from parent, fire event then clean up data
-      $parent.detach().trigger('closed.bs.alert').remove()
-    }
-
-    $.support.transition && $parent.hasClass('fade') ?
-      $parent
-        .one('bsTransitionEnd', removeElement)
-        .emulateTransitionEnd(Alert.TRANSITION_DURATION) :
-      removeElement()
-  }
-
-
-  // ALERT PLUGIN DEFINITION
-  // =======================
-
-  function Plugin(option) {
-    return this.each(function () {
-      var $this = $(this)
-      var data  = $this.data('bs.alert')
-
-      if (!data) $this.data('bs.alert', (data = new Alert(this)))
-      if (typeof option == 'string') data[option].call($this)
-    })
-  }
-
-  var old = $.fn.alert
-
-  $.fn.alert             = Plugin
-  $.fn.alert.Constructor = Alert
-
-
-  // ALERT NO CONFLICT
-  // =================
-
-  $.fn.alert.noConflict = function () {
-    $.fn.alert = old
-    return this
-  }
-
-
-  // ALERT DATA-API
-  // ==============
-
-  $(document).on('click.bs.alert.data-api', dismiss, Alert.prototype.close)
-
-}(jQuery);
-
-/* ========================================================================
- * Bootstrap: button.js v3.3.7
- * http://getbootstrap.com/javascript/#buttons
- * ========================================================================
- * Copyright 2011-2016 Twitter, Inc.
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
- * ======================================================================== */
-
-
-+function ($) {
-  'use strict';
-
-  // BUTTON PUBLIC CLASS DEFINITION
-  // ==============================
-
-  var Button = function (element, options) {
-    this.$element  = $(element)
-    this.options   = $.extend({}, Button.DEFAULTS, options)
-    this.isLoading = false
-  }
-
-  Button.VERSION  = '3.3.7'
-
-  Button.DEFAULTS = {
-    loadingText: 'loading...'
-  }
-
-  Button.prototype.setState = function (state) {
-    var d    = 'disabled'
-    var $el  = this.$element
-    var val  = $el.is('input') ? 'val' : 'html'
-    var data = $el.data()
-
-    state += 'Text'
-
-    if (data.resetText == null) $el.data('resetText', $el[val]())
-
-    // push to event loop to allow forms to submit
-    setTimeout($.proxy(function () {
-      $el[val](data[state] == null ? this.options[state] : data[state])
-
-      if (state == 'loadingText') {
-        this.isLoading = true
-        $el.addClass(d).attr(d, d).prop(d, true)
-      } else if (this.isLoading) {
-        this.isLoading = false
-        $el.removeClass(d).removeAttr(d).prop(d, false)
-      }
-    }, this), 0)
-  }
-
-  Button.prototype.toggle = function () {
-    var changed = true
-    var $parent = this.$element.closest('[data-toggle="buttons"]')
-
-    if ($parent.length) {
-      var $input = this.$element.find('input')
-      if ($input.prop('type') == 'radio') {
-        if ($input.prop('checked')) changed = false
-        $parent.find('.active').removeClass('active')
-        this.$element.addClass('active')
-      } else if ($input.prop('type') == 'checkbox') {
-        if (($input.prop('checked')) !== this.$element.hasClass('active')) changed = false
-        this.$element.toggleClass('active')
-      }
-      $input.prop('checked', this.$element.hasClass('active'))
-      if (changed) $input.trigger('change')
-    } else {
-      this.$element.attr('aria-pressed', !this.$element.hasClass('active'))
-      this.$element.toggleClass('active')
-    }
-  }
-
-
-  // BUTTON PLUGIN DEFINITION
-  // ========================
-
-  function Plugin(option) {
-    return this.each(function () {
-      var $this   = $(this)
-      var data    = $this.data('bs.button')
-      var options = typeof option == 'object' && option
-
-      if (!data) $this.data('bs.button', (data = new Button(this, options)))
-
-      if (option == 'toggle') data.toggle()
-      else if (option) data.setState(option)
-    })
-  }
-
-  var old = $.fn.button
-
-  $.fn.button             = Plugin
-  $.fn.button.Constructor = Button
-
-
-  // BUTTON NO CONFLICT
-  // ==================
-
-  $.fn.button.noConflict = function () {
-    $.fn.button = old
-    return this
-  }
-
-
-  // BUTTON DATA-API
-  // ===============
-
-  $(document)
-    .on('click.bs.button.data-api', '[data-toggle^="button"]', function (e) {
-      var $btn = $(e.target).closest('.btn')
-      Plugin.call($btn, 'toggle')
-      if (!($(e.target).is('input[type="radio"], input[type="checkbox"]'))) {
-        // Prevent double click on radios, and the double selections (so cancellation) on checkboxes
-        e.preventDefault()
-        // The target component still receive the focus
-        if ($btn.is('input,button')) $btn.trigger('focus')
-        else $btn.find('input:visible,button:visible').first().trigger('focus')
-      }
-    })
-    .on('focus.bs.button.data-api blur.bs.button.data-api', '[data-toggle^="button"]', function (e) {
-      $(e.target).closest('.btn').toggleClass('focus', /^focus(in)?$/.test(e.type))
-    })
-
-}(jQuery);
-
-/* ========================================================================
- * Bootstrap: carousel.js v3.3.7
- * http://getbootstrap.com/javascript/#carousel
- * ========================================================================
- * Copyright 2011-2016 Twitter, Inc.
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
- * ======================================================================== */
-
-
-+function ($) {
-  'use strict';
-
-  // CAROUSEL CLASS DEFINITION
-  // =========================
-
-  var Carousel = function (element, options) {
-    this.$element    = $(element)
-    this.$indicators = this.$element.find('.carousel-indicators')
-    this.options     = options
-    this.paused      = null
-    this.sliding     = null
-    this.interval    = null
-    this.$active     = null
-    this.$items      = null
-
-    this.options.keyboard && this.$element.on('keydown.bs.carousel', $.proxy(this.keydown, this))
-
-    this.options.pause == 'hover' && !('ontouchstart' in document.documentElement) && this.$element
-      .on('mouseenter.bs.carousel', $.proxy(this.pause, this))
-      .on('mouseleave.bs.carousel', $.proxy(this.cycle, this))
-  }
-
-  Carousel.VERSION  = '3.3.7'
-
-  Carousel.TRANSITION_DURATION = 600
-
-  Carousel.DEFAULTS = {
-    interval: 5000,
-    pause: 'hover',
-    wrap: true,
-    keyboard: true
-  }
-
-  Carousel.prototype.keydown = function (e) {
-    if (/input|textarea/i.test(e.target.tagName)) return
-    switch (e.which) {
-      case 37: this.prev(); break
-      case 39: this.next(); break
-      default: return
-    }
-
-    e.preventDefault()
-  }
-
-  Carousel.prototype.cycle = function (e) {
-    e || (this.paused = false)
-
-    this.interval && clearInterval(this.interval)
-
-    this.options.interval
-      && !this.paused
-      && (this.interval = setInterval($.proxy(this.next, this), this.options.interval))
-
-    return this
-  }
-
-  Carousel.prototype.getItemIndex = function (item) {
-    this.$items = item.parent().children('.item')
-    return this.$items.index(item || this.$active)
-  }
-
-  Carousel.prototype.getItemForDirection = function (direction, active) {
-    var activeIndex = this.getItemIndex(active)
-    var willWrap = (direction == 'prev' && activeIndex === 0)
-                || (direction == 'next' && activeIndex == (this.$items.length - 1))
-    if (willWrap && !this.options.wrap) return active
-    var delta = direction == 'prev' ? -1 : 1
-    var itemIndex = (activeIndex + delta) % this.$items.length
-    return this.$items.eq(itemIndex)
-  }
-
-  Carousel.prototype.to = function (pos) {
-    var that        = this
-    var activeIndex = this.getItemIndex(this.$active = this.$element.find('.item.active'))
-
-    if (pos > (this.$items.length - 1) || pos < 0) return
-
-    if (this.sliding)       return this.$element.one('slid.bs.carousel', function () { that.to(pos) }) // yes, "slid"
-    if (activeIndex == pos) return this.pause().cycle()
-
-    return this.slide(pos > activeIndex ? 'next' : 'prev', this.$items.eq(pos))
-  }
-
-  Carousel.prototype.pause = function (e) {
-    e || (this.paused = true)
-
-    if (this.$element.find('.next, .prev').length && $.support.transition) {
-      this.$element.trigger($.support.transition.end)
-      this.cycle(true)
-    }
-
-    this.interval = clearInterval(this.interval)
-
-    return this
-  }
-
-  Carousel.prototype.next = function () {
-    if (this.sliding) return
-    return this.slide('next')
-  }
-
-  Carousel.prototype.prev = function () {
-    if (this.sliding) return
-    return this.slide('prev')
-  }
-
-  Carousel.prototype.slide = function (type, next) {
-    var $active   = this.$element.find('.item.active')
-    var $next     = next || this.getItemForDirection(type, $active)
-    var isCycling = this.interval
-    var direction = type == 'next' ? 'left' : 'right'
-    var that      = this
-
-    if ($next.hasClass('active')) return (this.sliding = false)
-
-    var relatedTarget = $next[0]
-    var slideEvent = $.Event('slide.bs.carousel', {
-      relatedTarget: relatedTarget,
-      direction: direction
-    })
-    this.$element.trigger(slideEvent)
-    if (slideEvent.isDefaultPrevented()) return
-
-    this.sliding = true
-
-    isCycling && this.pause()
-
-    if (this.$indicators.length) {
-      this.$indicators.find('.active').removeClass('active')
-      var $nextIndicator = $(this.$indicators.children()[this.getItemIndex($next)])
-      $nextIndicator && $nextIndicator.addClass('active')
-    }
-
-    var slidEvent = $.Event('slid.bs.carousel', { relatedTarget: relatedTarget, direction: direction }) // yes, "slid"
-    if ($.support.transition && this.$element.hasClass('slide')) {
-      $next.addClass(type)
-      $next[0].offsetWidth // force reflow
-      $active.addClass(direction)
-      $next.addClass(direction)
-      $active
-        .one('bsTransitionEnd', function () {
-          $next.removeClass([type, direction].join(' ')).addClass('active')
-          $active.removeClass(['active', direction].join(' '))
-          that.sliding = false
-          setTimeout(function () {
-            that.$element.trigger(slidEvent)
-          }, 0)
-        })
-        .emulateTransitionEnd(Carousel.TRANSITION_DURATION)
-    } else {
-      $active.removeClass('active')
-      $next.addClass('active')
-      this.sliding = false
-      this.$element.trigger(slidEvent)
-    }
-
-    isCycling && this.cycle()
-
-    return this
-  }
-
-
-  // CAROUSEL PLUGIN DEFINITION
-  // ==========================
-
-  function Plugin(option) {
-    return this.each(function () {
-      var $this   = $(this)
-      var data    = $this.data('bs.carousel')
-      var options = $.extend({}, Carousel.DEFAULTS, $this.data(), typeof option == 'object' && option)
-      var action  = typeof option == 'string' ? option : options.slide
-
-      if (!data) $this.data('bs.carousel', (data = new Carousel(this, options)))
-      if (typeof option == 'number') data.to(option)
-      else if (action) data[action]()
-      else if (options.interval) data.pause().cycle()
-    })
-  }
-
-  var old = $.fn.carousel
-
-  $.fn.carousel             = Plugin
-  $.fn.carousel.Constructor = Carousel
-
-
-  // CAROUSEL NO CONFLICT
-  // ====================
-
-  $.fn.carousel.noConflict = function () {
-    $.fn.carousel = old
-    return this
-  }
-
-
-  // CAROUSEL DATA-API
-  // =================
-
-  var clickHandler = function (e) {
-    var href
-    var $this   = $(this)
-    var $target = $($this.attr('data-target') || (href = $this.attr('href')) && href.replace(/.*(?=#[^\s]+$)/, '')) // strip for ie7
-    if (!$target.hasClass('carousel')) return
-    var options = $.extend({}, $target.data(), $this.data())
-    var slideIndex = $this.attr('data-slide-to')
-    if (slideIndex) options.interval = false
-
-    Plugin.call($target, options)
-
-    if (slideIndex) {
-      $target.data('bs.carousel').to(slideIndex)
-    }
-
-    e.preventDefault()
-  }
-
-  $(document)
-    .on('click.bs.carousel.data-api', '[data-slide]', clickHandler)
-    .on('click.bs.carousel.data-api', '[data-slide-to]', clickHandler)
-
-  $(window).on('load', function () {
-    $('[data-ride="carousel"]').each(function () {
-      var $carousel = $(this)
-      Plugin.call($carousel, $carousel.data())
-    })
-  })
-
-}(jQuery);
-
-/* ========================================================================
- * Bootstrap: collapse.js v3.3.7
- * http://getbootstrap.com/javascript/#collapse
- * ========================================================================
- * Copyright 2011-2016 Twitter, Inc.
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
- * ======================================================================== */
-
-/* jshint latedef: false */
-
-+function ($) {
-  'use strict';
-
-  // COLLAPSE PUBLIC CLASS DEFINITION
-  // ================================
-
-  var Collapse = function (element, options) {
-    this.$element      = $(element)
-    this.options       = $.extend({}, Collapse.DEFAULTS, options)
-    this.$trigger      = $('[data-toggle="collapse"][href="#' + element.id + '"],' +
-                           '[data-toggle="collapse"][data-target="#' + element.id + '"]')
-    this.transitioning = null
-
-    if (this.options.parent) {
-      this.$parent = this.getParent()
-    } else {
-      this.addAriaAndCollapsedClass(this.$element, this.$trigger)
-    }
-
-    if (this.options.toggle) this.toggle()
-  }
-
-  Collapse.VERSION  = '3.3.7'
-
-  Collapse.TRANSITION_DURATION = 350
-
-  Collapse.DEFAULTS = {
-    toggle: true
-  }
-
-  Collapse.prototype.dimension = function () {
-    var hasWidth = this.$element.hasClass('width')
-    return hasWidth ? 'width' : 'height'
-  }
-
-  Collapse.prototype.show = function () {
-    if (this.transitioning || this.$element.hasClass('in')) return
-
-    var activesData
-    var actives = this.$parent && this.$parent.children('.panel').children('.in, .collapsing')
-
-    if (actives && actives.length) {
-      activesData = actives.data('bs.collapse')
-      if (activesData && activesData.transitioning) return
-    }
-
-    var startEvent = $.Event('show.bs.collapse')
-    this.$element.trigger(startEvent)
-    if (startEvent.isDefaultPrevented()) return
-
-    if (actives && actives.length) {
-      Plugin.call(actives, 'hide')
-      activesData || actives.data('bs.collapse', null)
-    }
-
-    var dimension = this.dimension()
-
-    this.$element
-      .removeClass('collapse')
-      .addClass('collapsing')[dimension](0)
-      .attr('aria-expanded', true)
-
-    this.$trigger
-      .removeClass('collapsed')
-      .attr('aria-expanded', true)
-
-    this.transitioning = 1
-
-    var complete = function () {
-      this.$element
-        .removeClass('collapsing')
-        .addClass('collapse in')[dimension]('')
-      this.transitioning = 0
-      this.$element
-        .trigger('shown.bs.collapse')
-    }
-
-    if (!$.support.transition) return complete.call(this)
-
-    var scrollSize = $.camelCase(['scroll', dimension].join('-'))
-
-    this.$element
-      .one('bsTransitionEnd', $.proxy(complete, this))
-      .emulateTransitionEnd(Collapse.TRANSITION_DURATION)[dimension](this.$element[0][scrollSize])
-  }
-
-  Collapse.prototype.hide = function () {
-    if (this.transitioning || !this.$element.hasClass('in')) return
-
-    var startEvent = $.Event('hide.bs.collapse')
-    this.$element.trigger(startEvent)
-    if (startEvent.isDefaultPrevented()) return
-
-    var dimension = this.dimension()
-
-    this.$element[dimension](this.$element[dimension]())[0].offsetHeight
-
-    this.$element
-      .addClass('collapsing')
-      .removeClass('collapse in')
-      .attr('aria-expanded', false)
-
-    this.$trigger
-      .addClass('collapsed')
-      .attr('aria-expanded', false)
-
-    this.transitioning = 1
-
-    var complete = function () {
-      this.transitioning = 0
-      this.$element
-        .removeClass('collapsing')
-        .addClass('collapse')
-        .trigger('hidden.bs.collapse')
-    }
-
-    if (!$.support.transition) return complete.call(this)
-
-    this.$element
-      [dimension](0)
-      .one('bsTransitionEnd', $.proxy(complete, this))
-      .emulateTransitionEnd(Collapse.TRANSITION_DURATION)
-  }
-
-  Collapse.prototype.toggle = function () {
-    this[this.$element.hasClass('in') ? 'hide' : 'show']()
-  }
-
-  Collapse.prototype.getParent = function () {
-    return $(this.options.parent)
-      .find('[data-toggle="collapse"][data-parent="' + this.options.parent + '"]')
-      .each($.proxy(function (i, element) {
-        var $element = $(element)
-        this.addAriaAndCollapsedClass(getTargetFromTrigger($element), $element)
-      }, this))
-      .end()
-  }
-
-  Collapse.prototype.addAriaAndCollapsedClass = function ($element, $trigger) {
-    var isOpen = $element.hasClass('in')
-
-    $element.attr('aria-expanded', isOpen)
-    $trigger
-      .toggleClass('collapsed', !isOpen)
-      .attr('aria-expanded', isOpen)
-  }
-
-  function getTargetFromTrigger($trigger) {
-    var href
-    var target = $trigger.attr('data-target')
-      || (href = $trigger.attr('href')) && href.replace(/.*(?=#[^\s]+$)/, '') // strip for ie7
-
-    return $(target)
-  }
-
-
-  // COLLAPSE PLUGIN DEFINITION
-  // ==========================
-
-  function Plugin(option) {
-    return this.each(function () {
-      var $this   = $(this)
-      var data    = $this.data('bs.collapse')
-      var options = $.extend({}, Collapse.DEFAULTS, $this.data(), typeof option == 'object' && option)
-
-      if (!data && options.toggle && /show|hide/.test(option)) options.toggle = false
-      if (!data) $this.data('bs.collapse', (data = new Collapse(this, options)))
-      if (typeof option == 'string') data[option]()
-    })
-  }
-
-  var old = $.fn.collapse
-
-  $.fn.collapse             = Plugin
-  $.fn.collapse.Constructor = Collapse
-
-
-  // COLLAPSE NO CONFLICT
-  // ====================
-
-  $.fn.collapse.noConflict = function () {
-    $.fn.collapse = old
-    return this
-  }
-
-
-  // COLLAPSE DATA-API
-  // =================
-
-  $(document).on('click.bs.collapse.data-api', '[data-toggle="collapse"]', function (e) {
-    var $this   = $(this)
-
-    if (!$this.attr('data-target')) e.preventDefault()
-
-    var $target = getTargetFromTrigger($this)
-    var data    = $target.data('bs.collapse')
-    var option  = data ? 'toggle' : $this.data()
-
-    Plugin.call($target, option)
-  })
-
-}(jQuery);
-
-/* ========================================================================
- * Bootstrap: dropdown.js v3.3.7
- * http://getbootstrap.com/javascript/#dropdowns
- * ========================================================================
- * Copyright 2011-2016 Twitter, Inc.
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
- * ======================================================================== */
-
-
-+function ($) {
-  'use strict';
-
-  // DROPDOWN CLASS DEFINITION
-  // =========================
-
-  var backdrop = '.dropdown-backdrop'
-  var toggle   = '[data-toggle="dropdown"]'
-  var Dropdown = function (element) {
-    $(element).on('click.bs.dropdown', this.toggle)
-  }
-
-  Dropdown.VERSION = '3.3.7'
-
-  function getParent($this) {
-    var selector = $this.attr('data-target')
-
-    if (!selector) {
-      selector = $this.attr('href')
-      selector = selector && /#[A-Za-z]/.test(selector) && selector.replace(/.*(?=#[^\s]*$)/, '') // strip for ie7
-    }
-
-    var $parent = selector && $(selector)
-
-    return $parent && $parent.length ? $parent : $this.parent()
-  }
-
-  function clearMenus(e) {
-    if (e && e.which === 3) return
-    $(backdrop).remove()
-    $(toggle).each(function () {
-      var $this         = $(this)
-      var $parent       = getParent($this)
-      var relatedTarget = { relatedTarget: this }
-
-      if (!$parent.hasClass('open')) return
-
-      if (e && e.type == 'click' && /input|textarea/i.test(e.target.tagName) && $.contains($parent[0], e.target)) return
-
-      $parent.trigger(e = $.Event('hide.bs.dropdown', relatedTarget))
-
-      if (e.isDefaultPrevented()) return
-
-      $this.attr('aria-expanded', 'false')
-      $parent.removeClass('open').trigger($.Event('hidden.bs.dropdown', relatedTarget))
-    })
-  }
-
-  Dropdown.prototype.toggle = function (e) {
-    var $this = $(this)
-
-    if ($this.is('.disabled, :disabled')) return
-
-    var $parent  = getParent($this)
-    var isActive = $parent.hasClass('open')
-
-    clearMenus()
-
-    if (!isActive) {
-      if ('ontouchstart' in document.documentElement && !$parent.closest('.navbar-nav').length) {
-        // if mobile we use a backdrop because click events don't delegate
-        $(document.createElement('div'))
-          .addClass('dropdown-backdrop')
-          .insertAfter($(this))
-          .on('click', clearMenus)
-      }
-
-      var relatedTarget = { relatedTarget: this }
-      $parent.trigger(e = $.Event('show.bs.dropdown', relatedTarget))
-
-      if (e.isDefaultPrevented()) return
-
-      $this
-        .trigger('focus')
-        .attr('aria-expanded', 'true')
-
-      $parent
-        .toggleClass('open')
-        .trigger($.Event('shown.bs.dropdown', relatedTarget))
-    }
-
-    return false
-  }
-
-  Dropdown.prototype.keydown = function (e) {
-    if (!/(38|40|27|32)/.test(e.which) || /input|textarea/i.test(e.target.tagName)) return
-
-    var $this = $(this)
-
-    e.preventDefault()
-    e.stopPropagation()
-
-    if ($this.is('.disabled, :disabled')) return
-
-    var $parent  = getParent($this)
-    var isActive = $parent.hasClass('open')
-
-    if (!isActive && e.which != 27 || isActive && e.which == 27) {
-      if (e.which == 27) $parent.find(toggle).trigger('focus')
-      return $this.trigger('click')
-    }
-
-    var desc = ' li:not(.disabled):visible a'
-    var $items = $parent.find('.dropdown-menu' + desc)
-
-    if (!$items.length) return
-
-    var index = $items.index(e.target)
-
-    if (e.which == 38 && index > 0)                 index--         // up
-    if (e.which == 40 && index < $items.length - 1) index++         // down
-    if (!~index)                                    index = 0
-
-    $items.eq(index).trigger('focus')
-  }
-
-
-  // DROPDOWN PLUGIN DEFINITION
-  // ==========================
-
-  function Plugin(option) {
-    return this.each(function () {
-      var $this = $(this)
-      var data  = $this.data('bs.dropdown')
-
-      if (!data) $this.data('bs.dropdown', (data = new Dropdown(this)))
-      if (typeof option == 'string') data[option].call($this)
-    })
-  }
-
-  var old = $.fn.dropdown
-
-  $.fn.dropdown             = Plugin
-  $.fn.dropdown.Constructor = Dropdown
-
-
-  // DROPDOWN NO CONFLICT
-  // ====================
-
-  $.fn.dropdown.noConflict = function () {
-    $.fn.dropdown = old
-    return this
-  }
-
-
-  // APPLY TO STANDARD DROPDOWN ELEMENTS
-  // ===================================
-
-  $(document)
-    .on('click.bs.dropdown.data-api', clearMenus)
-    .on('click.bs.dropdown.data-api', '.dropdown form', function (e) { e.stopPropagation() })
-    .on('click.bs.dropdown.data-api', toggle, Dropdown.prototype.toggle)
-    .on('keydown.bs.dropdown.data-api', toggle, Dropdown.prototype.keydown)
-    .on('keydown.bs.dropdown.data-api', '.dropdown-menu', Dropdown.prototype.keydown)
-
-}(jQuery);
-
-/* ========================================================================
- * Bootstrap: modal.js v3.3.7
- * http://getbootstrap.com/javascript/#modals
- * ========================================================================
- * Copyright 2011-2016 Twitter, Inc.
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
- * ======================================================================== */
-
-
-+function ($) {
-  'use strict';
-
-  // MODAL CLASS DEFINITION
-  // ======================
-
-  var Modal = function (element, options) {
-    this.options             = options
-    this.$body               = $(document.body)
-    this.$element            = $(element)
-    this.$dialog             = this.$element.find('.modal-dialog')
-    this.$backdrop           = null
-    this.isShown             = null
-    this.originalBodyPad     = null
-    this.scrollbarWidth      = 0
-    this.ignoreBackdropClick = false
-
-    if (this.options.remote) {
-      this.$element
-        .find('.modal-content')
-        .load(this.options.remote, $.proxy(function () {
-          this.$element.trigger('loaded.bs.modal')
-        }, this))
-    }
-  }
-
-  Modal.VERSION  = '3.3.7'
-
-  Modal.TRANSITION_DURATION = 300
-  Modal.BACKDROP_TRANSITION_DURATION = 150
-
-  Modal.DEFAULTS = {
-    backdrop: true,
-    keyboard: true,
-    show: true
-  }
-
-  Modal.prototype.toggle = function (_relatedTarget) {
-    return this.isShown ? this.hide() : this.show(_relatedTarget)
-  }
-
-  Modal.prototype.show = function (_relatedTarget) {
-    var that = this
-    var e    = $.Event('show.bs.modal', { relatedTarget: _relatedTarget })
-
-    this.$element.trigger(e)
-
-    if (this.isShown || e.isDefaultPrevented()) return
-
-    this.isShown = true
-
-    this.checkScrollbar()
-    this.setScrollbar()
-    this.$body.addClass('modal-open')
-
-    this.escape()
-    this.resize()
-
-    this.$element.on('click.dismiss.bs.modal', '[data-dismiss="modal"]', $.proxy(this.hide, this))
-
-    this.$dialog.on('mousedown.dismiss.bs.modal', function () {
-      that.$element.one('mouseup.dismiss.bs.modal', function (e) {
-        if ($(e.target).is(that.$element)) that.ignoreBackdropClick = true
-      })
-    })
-
-    this.backdrop(function () {
-      var transition = $.support.transition && that.$element.hasClass('fade')
-
-      if (!that.$element.parent().length) {
-        that.$element.appendTo(that.$body) // don't move modals dom position
-      }
-
-      that.$element
-        .show()
-        .scrollTop(0)
-
-      that.adjustDialog()
-
-      if (transition) {
-        that.$element[0].offsetWidth // force reflow
-      }
-
-      that.$element.addClass('in')
-
-      that.enforceFocus()
-
-      var e = $.Event('shown.bs.modal', { relatedTarget: _relatedTarget })
-
-      transition ?
-        that.$dialog // wait for modal to slide in
-          .one('bsTransitionEnd', function () {
-            that.$element.trigger('focus').trigger(e)
-          })
-          .emulateTransitionEnd(Modal.TRANSITION_DURATION) :
-        that.$element.trigger('focus').trigger(e)
-    })
-  }
-
-  Modal.prototype.hide = function (e) {
-    if (e) e.preventDefault()
-
-    e = $.Event('hide.bs.modal')
-
-    this.$element.trigger(e)
-
-    if (!this.isShown || e.isDefaultPrevented()) return
-
-    this.isShown = false
-
-    this.escape()
-    this.resize()
-
-    $(document).off('focusin.bs.modal')
-
-    this.$element
-      .removeClass('in')
-      .off('click.dismiss.bs.modal')
-      .off('mouseup.dismiss.bs.modal')
-
-    this.$dialog.off('mousedown.dismiss.bs.modal')
-
-    $.support.transition && this.$element.hasClass('fade') ?
-      this.$element
-        .one('bsTransitionEnd', $.proxy(this.hideModal, this))
-        .emulateTransitionEnd(Modal.TRANSITION_DURATION) :
-      this.hideModal()
-  }
-
-  Modal.prototype.enforceFocus = function () {
-    $(document)
-      .off('focusin.bs.modal') // guard against infinite focus loop
-      .on('focusin.bs.modal', $.proxy(function (e) {
-        if (document !== e.target &&
-            this.$element[0] !== e.target &&
-            !this.$element.has(e.target).length) {
-          this.$element.trigger('focus')
-        }
-      }, this))
-  }
-
-  Modal.prototype.escape = function () {
-    if (this.isShown && this.options.keyboard) {
-      this.$element.on('keydown.dismiss.bs.modal', $.proxy(function (e) {
-        e.which == 27 && this.hide()
-      }, this))
-    } else if (!this.isShown) {
-      this.$element.off('keydown.dismiss.bs.modal')
-    }
-  }
-
-  Modal.prototype.resize = function () {
-    if (this.isShown) {
-      $(window).on('resize.bs.modal', $.proxy(this.handleUpdate, this))
-    } else {
-      $(window).off('resize.bs.modal')
-    }
-  }
-
-  Modal.prototype.hideModal = function () {
-    var that = this
-    this.$element.hide()
-    this.backdrop(function () {
-      that.$body.removeClass('modal-open')
-      that.resetAdjustments()
-      that.resetScrollbar()
-      that.$element.trigger('hidden.bs.modal')
-    })
-  }
-
-  Modal.prototype.removeBackdrop = function () {
-    this.$backdrop && this.$backdrop.remove()
-    this.$backdrop = null
-  }
-
-  Modal.prototype.backdrop = function (callback) {
-    var that = this
-    var animate = this.$element.hasClass('fade') ? 'fade' : ''
-
-    if (this.isShown && this.options.backdrop) {
-      var doAnimate = $.support.transition && animate
-
-      this.$backdrop = $(document.createElement('div'))
-        .addClass('modal-backdrop ' + animate)
-        .appendTo(this.$body)
-
-      this.$element.on('click.dismiss.bs.modal', $.proxy(function (e) {
-        if (this.ignoreBackdropClick) {
-          this.ignoreBackdropClick = false
-          return
-        }
-        if (e.target !== e.currentTarget) return
-        this.options.backdrop == 'static'
-          ? this.$element[0].focus()
-          : this.hide()
-      }, this))
-
-      if (doAnimate) this.$backdrop[0].offsetWidth // force reflow
-
-      this.$backdrop.addClass('in')
-
-      if (!callback) return
-
-      doAnimate ?
-        this.$backdrop
-          .one('bsTransitionEnd', callback)
-          .emulateTransitionEnd(Modal.BACKDROP_TRANSITION_DURATION) :
-        callback()
-
-    } else if (!this.isShown && this.$backdrop) {
-      this.$backdrop.removeClass('in')
-
-      var callbackRemove = function () {
-        that.removeBackdrop()
-        callback && callback()
-      }
-      $.support.transition && this.$element.hasClass('fade') ?
-        this.$backdrop
-          .one('bsTransitionEnd', callbackRemove)
-          .emulateTransitionEnd(Modal.BACKDROP_TRANSITION_DURATION) :
-        callbackRemove()
-
-    } else if (callback) {
-      callback()
-    }
-  }
-
-  // these following methods are used to handle overflowing modals
-
-  Modal.prototype.handleUpdate = function () {
-    this.adjustDialog()
-  }
-
-  Modal.prototype.adjustDialog = function () {
-    var modalIsOverflowing = this.$element[0].scrollHeight > document.documentElement.clientHeight
-
-    this.$element.css({
-      paddingLeft:  !this.bodyIsOverflowing && modalIsOverflowing ? this.scrollbarWidth : '',
-      paddingRight: this.bodyIsOverflowing && !modalIsOverflowing ? this.scrollbarWidth : ''
-    })
-  }
-
-  Modal.prototype.resetAdjustments = function () {
-    this.$element.css({
-      paddingLeft: '',
-      paddingRight: ''
-    })
-  }
-
-  Modal.prototype.checkScrollbar = function () {
-    var fullWindowWidth = window.innerWidth
-    if (!fullWindowWidth) { // workaround for missing window.innerWidth in IE8
-      var documentElementRect = document.documentElement.getBoundingClientRect()
-      fullWindowWidth = documentElementRect.right - Math.abs(documentElementRect.left)
-    }
-    this.bodyIsOverflowing = document.body.clientWidth < fullWindowWidth
-    this.scrollbarWidth = this.measureScrollbar()
-  }
-
-  Modal.prototype.setScrollbar = function () {
-    var bodyPad = parseInt((this.$body.css('padding-right') || 0), 10)
-    this.originalBodyPad = document.body.style.paddingRight || ''
-    if (this.bodyIsOverflowing) this.$body.css('padding-right', bodyPad + this.scrollbarWidth)
-  }
-
-  Modal.prototype.resetScrollbar = function () {
-    this.$body.css('padding-right', this.originalBodyPad)
-  }
-
-  Modal.prototype.measureScrollbar = function () { // thx walsh
-    var scrollDiv = document.createElement('div')
-    scrollDiv.className = 'modal-scrollbar-measure'
-    this.$body.append(scrollDiv)
-    var scrollbarWidth = scrollDiv.offsetWidth - scrollDiv.clientWidth
-    this.$body[0].removeChild(scrollDiv)
-    return scrollbarWidth
-  }
-
-
-  // MODAL PLUGIN DEFINITION
-  // =======================
-
-  function Plugin(option, _relatedTarget) {
-    return this.each(function () {
-      var $this   = $(this)
-      var data    = $this.data('bs.modal')
-      var options = $.extend({}, Modal.DEFAULTS, $this.data(), typeof option == 'object' && option)
-
-      if (!data) $this.data('bs.modal', (data = new Modal(this, options)))
-      if (typeof option == 'string') data[option](_relatedTarget)
-      else if (options.show) data.show(_relatedTarget)
-    })
-  }
-
-  var old = $.fn.modal
-
-  $.fn.modal             = Plugin
-  $.fn.modal.Constructor = Modal
-
-
-  // MODAL NO CONFLICT
-  // =================
-
-  $.fn.modal.noConflict = function () {
-    $.fn.modal = old
-    return this
-  }
-
-
-  // MODAL DATA-API
-  // ==============
-
-  $(document).on('click.bs.modal.data-api', '[data-toggle="modal"]', function (e) {
-    var $this   = $(this)
-    var href    = $this.attr('href')
-    var $target = $($this.attr('data-target') || (href && href.replace(/.*(?=#[^\s]+$)/, ''))) // strip for ie7
-    var option  = $target.data('bs.modal') ? 'toggle' : $.extend({ remote: !/#/.test(href) && href }, $target.data(), $this.data())
-
-    if ($this.is('a')) e.preventDefault()
-
-    $target.one('show.bs.modal', function (showEvent) {
-      if (showEvent.isDefaultPrevented()) return // only register focus restorer if modal will actually get shown
-      $target.one('hidden.bs.modal', function () {
-        $this.is(':visible') && $this.trigger('focus')
-      })
-    })
-    Plugin.call($target, option, this)
-  })
-
-}(jQuery);
-
-/* ========================================================================
- * Bootstrap: tooltip.js v3.3.7
- * http://getbootstrap.com/javascript/#tooltip
- * Inspired by the original jQuery.tipsy by Jason Frame
- * ========================================================================
- * Copyright 2011-2016 Twitter, Inc.
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
- * ======================================================================== */
-
-
-+function ($) {
-  'use strict';
-
-  // TOOLTIP PUBLIC CLASS DEFINITION
-  // ===============================
-
-  var Tooltip = function (element, options) {
-    this.type       = null
-    this.options    = null
-    this.enabled    = null
-    this.timeout    = null
-    this.hoverState = null
-    this.$element   = null
-    this.inState    = null
-
-    this.init('tooltip', element, options)
-  }
-
-  Tooltip.VERSION  = '3.3.7'
-
-  Tooltip.TRANSITION_DURATION = 150
-
-  Tooltip.DEFAULTS = {
-    animation: true,
-    placement: 'top',
-    selector: false,
-    template: '<div class="tooltip" role="tooltip"><div class="tooltip-arrow"></div><div class="tooltip-inner"></div></div>',
-    trigger: 'hover focus',
-    title: '',
-    delay: 0,
-    html: false,
-    container: false,
-    viewport: {
-      selector: 'body',
-      padding: 0
-    }
-  }
-
-  Tooltip.prototype.init = function (type, element, options) {
-    this.enabled   = true
-    this.type      = type
-    this.$element  = $(element)
-    this.options   = this.getOptions(options)
-    this.$viewport = this.options.viewport && $($.isFunction(this.options.viewport) ? this.options.viewport.call(this, this.$element) : (this.options.viewport.selector || this.options.viewport))
-    this.inState   = { click: false, hover: false, focus: false }
-
-    if (this.$element[0] instanceof document.constructor && !this.options.selector) {
-      throw new Error('`selector` option must be specified when initializing ' + this.type + ' on the window.document object!')
-    }
-
-    var triggers = this.options.trigger.split(' ')
-
-    for (var i = triggers.length; i--;) {
-      var trigger = triggers[i]
-
-      if (trigger == 'click') {
-        this.$element.on('click.' + this.type, this.options.selector, $.proxy(this.toggle, this))
-      } else if (trigger != 'manual') {
-        var eventIn  = trigger == 'hover' ? 'mouseenter' : 'focusin'
-        var eventOut = trigger == 'hover' ? 'mouseleave' : 'focusout'
-
-        this.$element.on(eventIn  + '.' + this.type, this.options.selector, $.proxy(this.enter, this))
-        this.$element.on(eventOut + '.' + this.type, this.options.selector, $.proxy(this.leave, this))
-      }
-    }
-
-    this.options.selector ?
-      (this._options = $.extend({}, this.options, { trigger: 'manual', selector: '' })) :
-      this.fixTitle()
-  }
-
-  Tooltip.prototype.getDefaults = function () {
-    return Tooltip.DEFAULTS
-  }
-
-  Tooltip.prototype.getOptions = function (options) {
-    options = $.extend({}, this.getDefaults(), this.$element.data(), options)
-
-    if (options.delay && typeof options.delay == 'number') {
-      options.delay = {
-        show: options.delay,
-        hide: options.delay
-      }
-    }
-
-    return options
-  }
-
-  Tooltip.prototype.getDelegateOptions = function () {
-    var options  = {}
-    var defaults = this.getDefaults()
-
-    this._options && $.each(this._options, function (key, value) {
-      if (defaults[key] != value) options[key] = value
-    })
-
-    return options
-  }
-
-  Tooltip.prototype.enter = function (obj) {
-    var self = obj instanceof this.constructor ?
-      obj : $(obj.currentTarget).data('bs.' + this.type)
-
-    if (!self) {
-      self = new this.constructor(obj.currentTarget, this.getDelegateOptions())
-      $(obj.currentTarget).data('bs.' + this.type, self)
-    }
-
-    if (obj instanceof $.Event) {
-      self.inState[obj.type == 'focusin' ? 'focus' : 'hover'] = true
-    }
-
-    if (self.tip().hasClass('in') || self.hoverState == 'in') {
-      self.hoverState = 'in'
-      return
-    }
-
-    clearTimeout(self.timeout)
-
-    self.hoverState = 'in'
-
-    if (!self.options.delay || !self.options.delay.show) return self.show()
-
-    self.timeout = setTimeout(function () {
-      if (self.hoverState == 'in') self.show()
-    }, self.options.delay.show)
-  }
-
-  Tooltip.prototype.isInStateTrue = function () {
-    for (var key in this.inState) {
-      if (this.inState[key]) return true
-    }
-
-    return false
-  }
-
-  Tooltip.prototype.leave = function (obj) {
-    var self = obj instanceof this.constructor ?
-      obj : $(obj.currentTarget).data('bs.' + this.type)
-
-    if (!self) {
-      self = new this.constructor(obj.currentTarget, this.getDelegateOptions())
-      $(obj.currentTarget).data('bs.' + this.type, self)
-    }
-
-    if (obj instanceof $.Event) {
-      self.inState[obj.type == 'focusout' ? 'focus' : 'hover'] = false
-    }
-
-    if (self.isInStateTrue()) return
-
-    clearTimeout(self.timeout)
-
-    self.hoverState = 'out'
-
-    if (!self.options.delay || !self.options.delay.hide) return self.hide()
-
-    self.timeout = setTimeout(function () {
-      if (self.hoverState == 'out') self.hide()
-    }, self.options.delay.hide)
-  }
-
-  Tooltip.prototype.show = function () {
-    var e = $.Event('show.bs.' + this.type)
-
-    if (this.hasContent() && this.enabled) {
-      this.$element.trigger(e)
-
-      var inDom = $.contains(this.$element[0].ownerDocument.documentElement, this.$element[0])
-      if (e.isDefaultPrevented() || !inDom) return
-      var that = this
-
-      var $tip = this.tip()
-
-      var tipId = this.getUID(this.type)
-
-      this.setContent()
-      $tip.attr('id', tipId)
-      this.$element.attr('aria-describedby', tipId)
-
-      if (this.options.animation) $tip.addClass('fade')
-
-      var placement = typeof this.options.placement == 'function' ?
-        this.options.placement.call(this, $tip[0], this.$element[0]) :
-        this.options.placement
-
-      var autoToken = /\s?auto?\s?/i
-      var autoPlace = autoToken.test(placement)
-      if (autoPlace) placement = placement.replace(autoToken, '') || 'top'
-
-      $tip
-        .detach()
-        .css({ top: 0, left: 0, display: 'block' })
-        .addClass(placement)
-        .data('bs.' + this.type, this)
-
-      this.options.container ? $tip.appendTo(this.options.container) : $tip.insertAfter(this.$element)
-      this.$element.trigger('inserted.bs.' + this.type)
-
-      var pos          = this.getPosition()
-      var actualWidth  = $tip[0].offsetWidth
-      var actualHeight = $tip[0].offsetHeight
-
-      if (autoPlace) {
-        var orgPlacement = placement
-        var viewportDim = this.getPosition(this.$viewport)
-
-        placement = placement == 'bottom' && pos.bottom + actualHeight > viewportDim.bottom ? 'top'    :
-                    placement == 'top'    && pos.top    - actualHeight < viewportDim.top    ? 'bottom' :
-                    placement == 'right'  && pos.right  + actualWidth  > viewportDim.width  ? 'left'   :
-                    placement == 'left'   && pos.left   - actualWidth  < viewportDim.left   ? 'right'  :
-                    placement
-
-        $tip
-          .removeClass(orgPlacement)
-          .addClass(placement)
-      }
-
-      var calculatedOffset = this.getCalculatedOffset(placement, pos, actualWidth, actualHeight)
-
-      this.applyPlacement(calculatedOffset, placement)
-
-      var complete = function () {
-        var prevHoverState = that.hoverState
-        that.$element.trigger('shown.bs.' + that.type)
-        that.hoverState = null
-
-        if (prevHoverState == 'out') that.leave(that)
-      }
-
-      $.support.transition && this.$tip.hasClass('fade') ?
-        $tip
-          .one('bsTransitionEnd', complete)
-          .emulateTransitionEnd(Tooltip.TRANSITION_DURATION) :
-        complete()
-    }
-  }
-
-  Tooltip.prototype.applyPlacement = function (offset, placement) {
-    var $tip   = this.tip()
-    var width  = $tip[0].offsetWidth
-    var height = $tip[0].offsetHeight
-
-    // manually read margins because getBoundingClientRect includes difference
-    var marginTop = parseInt($tip.css('margin-top'), 10)
-    var marginLeft = parseInt($tip.css('margin-left'), 10)
-
-    // we must check for NaN for ie 8/9
-    if (isNaN(marginTop))  marginTop  = 0
-    if (isNaN(marginLeft)) marginLeft = 0
-
-    offset.top  += marginTop
-    offset.left += marginLeft
-
-    // $.fn.offset doesn't round pixel values
-    // so we use setOffset directly with our own function B-0
-    $.offset.setOffset($tip[0], $.extend({
-      using: function (props) {
-        $tip.css({
-          top: Math.round(props.top),
-          left: Math.round(props.left)
-        })
-      }
-    }, offset), 0)
-
-    $tip.addClass('in')
-
-    // check to see if placing tip in new offset caused the tip to resize itself
-    var actualWidth  = $tip[0].offsetWidth
-    var actualHeight = $tip[0].offsetHeight
-
-    if (placement == 'top' && actualHeight != height) {
-      offset.top = offset.top + height - actualHeight
-    }
-
-    var delta = this.getViewportAdjustedDelta(placement, offset, actualWidth, actualHeight)
-
-    if (delta.left) offset.left += delta.left
-    else offset.top += delta.top
-
-    var isVertical          = /top|bottom/.test(placement)
-    var arrowDelta          = isVertical ? delta.left * 2 - width + actualWidth : delta.top * 2 - height + actualHeight
-    var arrowOffsetPosition = isVertical ? 'offsetWidth' : 'offsetHeight'
-
-    $tip.offset(offset)
-    this.replaceArrow(arrowDelta, $tip[0][arrowOffsetPosition], isVertical)
-  }
-
-  Tooltip.prototype.replaceArrow = function (delta, dimension, isVertical) {
-    this.arrow()
-      .css(isVertical ? 'left' : 'top', 50 * (1 - delta / dimension) + '%')
-      .css(isVertical ? 'top' : 'left', '')
-  }
-
-  Tooltip.prototype.setContent = function () {
-    var $tip  = this.tip()
-    var title = this.getTitle()
-
-    $tip.find('.tooltip-inner')[this.options.html ? 'html' : 'text'](title)
-    $tip.removeClass('fade in top bottom left right')
-  }
-
-  Tooltip.prototype.hide = function (callback) {
-    var that = this
-    var $tip = $(this.$tip)
-    var e    = $.Event('hide.bs.' + this.type)
-
-    function complete() {
-      if (that.hoverState != 'in') $tip.detach()
-      if (that.$element) { // TODO: Check whether guarding this code with this `if` is really necessary.
-        that.$element
-          .removeAttr('aria-describedby')
-          .trigger('hidden.bs.' + that.type)
-      }
-      callback && callback()
-    }
-
-    this.$element.trigger(e)
-
-    if (e.isDefaultPrevented()) return
-
-    $tip.removeClass('in')
-
-    $.support.transition && $tip.hasClass('fade') ?
-      $tip
-        .one('bsTransitionEnd', complete)
-        .emulateTransitionEnd(Tooltip.TRANSITION_DURATION) :
-      complete()
-
-    this.hoverState = null
-
-    return this
-  }
-
-  Tooltip.prototype.fixTitle = function () {
-    var $e = this.$element
-    if ($e.attr('title') || typeof $e.attr('data-original-title') != 'string') {
-      $e.attr('data-original-title', $e.attr('title') || '').attr('title', '')
-    }
-  }
-
-  Tooltip.prototype.hasContent = function () {
-    return this.getTitle()
-  }
-
-  Tooltip.prototype.getPosition = function ($element) {
-    $element   = $element || this.$element
-
-    var el     = $element[0]
-    var isBody = el.tagName == 'BODY'
-
-    var elRect    = el.getBoundingClientRect()
-    if (elRect.width == null) {
-      // width and height are missing in IE8, so compute them manually; see https://github.com/twbs/bootstrap/issues/14093
-      elRect = $.extend({}, elRect, { width: elRect.right - elRect.left, height: elRect.bottom - elRect.top })
-    }
-    var isSvg = window.SVGElement && el instanceof window.SVGElement
-    // Avoid using $.offset() on SVGs since it gives incorrect results in jQuery 3.
-    // See https://github.com/twbs/bootstrap/issues/20280
-    var elOffset  = isBody ? { top: 0, left: 0 } : (isSvg ? null : $element.offset())
-    var scroll    = { scroll: isBody ? document.documentElement.scrollTop || document.body.scrollTop : $element.scrollTop() }
-    var outerDims = isBody ? { width: $(window).width(), height: $(window).height() } : null
-
-    return $.extend({}, elRect, scroll, outerDims, elOffset)
-  }
-
-  Tooltip.prototype.getCalculatedOffset = function (placement, pos, actualWidth, actualHeight) {
-    return placement == 'bottom' ? { top: pos.top + pos.height,   left: pos.left + pos.width / 2 - actualWidth / 2 } :
-           placement == 'top'    ? { top: pos.top - actualHeight, left: pos.left + pos.width / 2 - actualWidth / 2 } :
-           placement == 'left'   ? { top: pos.top + pos.height / 2 - actualHeight / 2, left: pos.left - actualWidth } :
-        /* placement == 'right' */ { top: pos.top + pos.height / 2 - actualHeight / 2, left: pos.left + pos.width }
-
-  }
-
-  Tooltip.prototype.getViewportAdjustedDelta = function (placement, pos, actualWidth, actualHeight) {
-    var delta = { top: 0, left: 0 }
-    if (!this.$viewport) return delta
-
-    var viewportPadding = this.options.viewport && this.options.viewport.padding || 0
-    var viewportDimensions = this.getPosition(this.$viewport)
-
-    if (/right|left/.test(placement)) {
-      var topEdgeOffset    = pos.top - viewportPadding - viewportDimensions.scroll
-      var bottomEdgeOffset = pos.top + viewportPadding - viewportDimensions.scroll + actualHeight
-      if (topEdgeOffset < viewportDimensions.top) { // top overflow
-        delta.top = viewportDimensions.top - topEdgeOffset
-      } else if (bottomEdgeOffset > viewportDimensions.top + viewportDimensions.height) { // bottom overflow
-        delta.top = viewportDimensions.top + viewportDimensions.height - bottomEdgeOffset
-      }
-    } else {
-      var leftEdgeOffset  = pos.left - viewportPadding
-      var rightEdgeOffset = pos.left + viewportPadding + actualWidth
-      if (leftEdgeOffset < viewportDimensions.left) { // left overflow
-        delta.left = viewportDimensions.left - leftEdgeOffset
-      } else if (rightEdgeOffset > viewportDimensions.right) { // right overflow
-        delta.left = viewportDimensions.left + viewportDimensions.width - rightEdgeOffset
-      }
-    }
-
-    return delta
-  }
-
-  Tooltip.prototype.getTitle = function () {
-    var title
-    var $e = this.$element
-    var o  = this.options
-
-    title = $e.attr('data-original-title')
-      || (typeof o.title == 'function' ? o.title.call($e[0]) :  o.title)
-
-    return title
-  }
-
-  Tooltip.prototype.getUID = function (prefix) {
-    do prefix += ~~(Math.random() * 1000000)
-    while (document.getElementById(prefix))
-    return prefix
-  }
-
-  Tooltip.prototype.tip = function () {
-    if (!this.$tip) {
-      this.$tip = $(this.options.template)
-      if (this.$tip.length != 1) {
-        throw new Error(this.type + ' `template` option must consist of exactly 1 top-level element!')
-      }
-    }
-    return this.$tip
-  }
-
-  Tooltip.prototype.arrow = function () {
-    return (this.$arrow = this.$arrow || this.tip().find('.tooltip-arrow'))
-  }
-
-  Tooltip.prototype.enable = function () {
-    this.enabled = true
-  }
-
-  Tooltip.prototype.disable = function () {
-    this.enabled = false
-  }
-
-  Tooltip.prototype.toggleEnabled = function () {
-    this.enabled = !this.enabled
-  }
-
-  Tooltip.prototype.toggle = function (e) {
-    var self = this
-    if (e) {
-      self = $(e.currentTarget).data('bs.' + this.type)
-      if (!self) {
-        self = new this.constructor(e.currentTarget, this.getDelegateOptions())
-        $(e.currentTarget).data('bs.' + this.type, self)
-      }
-    }
-
-    if (e) {
-      self.inState.click = !self.inState.click
-      if (self.isInStateTrue()) self.enter(self)
-      else self.leave(self)
-    } else {
-      self.tip().hasClass('in') ? self.leave(self) : self.enter(self)
-    }
-  }
-
-  Tooltip.prototype.destroy = function () {
-    var that = this
-    clearTimeout(this.timeout)
-    this.hide(function () {
-      that.$element.off('.' + that.type).removeData('bs.' + that.type)
-      if (that.$tip) {
-        that.$tip.detach()
-      }
-      that.$tip = null
-      that.$arrow = null
-      that.$viewport = null
-      that.$element = null
-    })
-  }
-
-
-  // TOOLTIP PLUGIN DEFINITION
-  // =========================
-
-  function Plugin(option) {
-    return this.each(function () {
-      var $this   = $(this)
-      var data    = $this.data('bs.tooltip')
-      var options = typeof option == 'object' && option
-
-      if (!data && /destroy|hide/.test(option)) return
-      if (!data) $this.data('bs.tooltip', (data = new Tooltip(this, options)))
-      if (typeof option == 'string') data[option]()
-    })
-  }
-
-  var old = $.fn.tooltip
-
-  $.fn.tooltip             = Plugin
-  $.fn.tooltip.Constructor = Tooltip
-
-
-  // TOOLTIP NO CONFLICT
-  // ===================
-
-  $.fn.tooltip.noConflict = function () {
-    $.fn.tooltip = old
-    return this
-  }
-
-}(jQuery);
-
-/* ========================================================================
- * Bootstrap: popover.js v3.3.7
- * http://getbootstrap.com/javascript/#popovers
- * ========================================================================
- * Copyright 2011-2016 Twitter, Inc.
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
- * ======================================================================== */
-
-
-+function ($) {
-  'use strict';
-
-  // POPOVER PUBLIC CLASS DEFINITION
-  // ===============================
-
-  var Popover = function (element, options) {
-    this.init('popover', element, options)
-  }
-
-  if (!$.fn.tooltip) throw new Error('Popover requires tooltip.js')
-
-  Popover.VERSION  = '3.3.7'
-
-  Popover.DEFAULTS = $.extend({}, $.fn.tooltip.Constructor.DEFAULTS, {
-    placement: 'right',
-    trigger: 'click',
-    content: '',
-    template: '<div class="popover" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content"></div></div>'
-  })
-
-
-  // NOTE: POPOVER EXTENDS tooltip.js
-  // ================================
-
-  Popover.prototype = $.extend({}, $.fn.tooltip.Constructor.prototype)
-
-  Popover.prototype.constructor = Popover
-
-  Popover.prototype.getDefaults = function () {
-    return Popover.DEFAULTS
-  }
-
-  Popover.prototype.setContent = function () {
-    var $tip    = this.tip()
-    var title   = this.getTitle()
-    var content = this.getContent()
-
-    $tip.find('.popover-title')[this.options.html ? 'html' : 'text'](title)
-    $tip.find('.popover-content').children().detach().end()[ // we use append for html objects to maintain js events
-      this.options.html ? (typeof content == 'string' ? 'html' : 'append') : 'text'
-    ](content)
-
-    $tip.removeClass('fade top bottom left right in')
-
-    // IE8 doesn't accept hiding via the `:empty` pseudo selector, we have to do
-    // this manually by checking the contents.
-    if (!$tip.find('.popover-title').html()) $tip.find('.popover-title').hide()
-  }
-
-  Popover.prototype.hasContent = function () {
-    return this.getTitle() || this.getContent()
-  }
-
-  Popover.prototype.getContent = function () {
-    var $e = this.$element
-    var o  = this.options
-
-    return $e.attr('data-content')
-      || (typeof o.content == 'function' ?
-            o.content.call($e[0]) :
-            o.content)
-  }
-
-  Popover.prototype.arrow = function () {
-    return (this.$arrow = this.$arrow || this.tip().find('.arrow'))
-  }
-
-
-  // POPOVER PLUGIN DEFINITION
-  // =========================
-
-  function Plugin(option) {
-    return this.each(function () {
-      var $this   = $(this)
-      var data    = $this.data('bs.popover')
-      var options = typeof option == 'object' && option
-
-      if (!data && /destroy|hide/.test(option)) return
-      if (!data) $this.data('bs.popover', (data = new Popover(this, options)))
-      if (typeof option == 'string') data[option]()
-    })
-  }
-
-  var old = $.fn.popover
-
-  $.fn.popover             = Plugin
-  $.fn.popover.Constructor = Popover
-
-
-  // POPOVER NO CONFLICT
-  // ===================
-
-  $.fn.popover.noConflict = function () {
-    $.fn.popover = old
-    return this
-  }
-
-}(jQuery);
-
-/* ========================================================================
- * Bootstrap: scrollspy.js v3.3.7
- * http://getbootstrap.com/javascript/#scrollspy
- * ========================================================================
- * Copyright 2011-2016 Twitter, Inc.
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
- * ======================================================================== */
-
-
-+function ($) {
-  'use strict';
-
-  // SCROLLSPY CLASS DEFINITION
-  // ==========================
-
-  function ScrollSpy(element, options) {
-    this.$body          = $(document.body)
-    this.$scrollElement = $(element).is(document.body) ? $(window) : $(element)
-    this.options        = $.extend({}, ScrollSpy.DEFAULTS, options)
-    this.selector       = (this.options.target || '') + ' .nav li > a'
-    this.offsets        = []
-    this.targets        = []
-    this.activeTarget   = null
-    this.scrollHeight   = 0
-
-    this.$scrollElement.on('scroll.bs.scrollspy', $.proxy(this.process, this))
-    this.refresh()
-    this.process()
-  }
-
-  ScrollSpy.VERSION  = '3.3.7'
-
-  ScrollSpy.DEFAULTS = {
-    offset: 10
-  }
-
-  ScrollSpy.prototype.getScrollHeight = function () {
-    return this.$scrollElement[0].scrollHeight || Math.max(this.$body[0].scrollHeight, document.documentElement.scrollHeight)
-  }
-
-  ScrollSpy.prototype.refresh = function () {
-    var that          = this
-    var offsetMethod  = 'offset'
-    var offsetBase    = 0
-
-    this.offsets      = []
-    this.targets      = []
-    this.scrollHeight = this.getScrollHeight()
-
-    if (!$.isWindow(this.$scrollElement[0])) {
-      offsetMethod = 'position'
-      offsetBase   = this.$scrollElement.scrollTop()
-    }
-
-    this.$body
-      .find(this.selector)
-      .map(function () {
-        var $el   = $(this)
-        var href  = $el.data('target') || $el.attr('href')
-        var $href = /^#./.test(href) && $(href)
-
-        return ($href
-          && $href.length
-          && $href.is(':visible')
-          && [[$href[offsetMethod]().top + offsetBase, href]]) || null
-      })
-      .sort(function (a, b) { return a[0] - b[0] })
-      .each(function () {
-        that.offsets.push(this[0])
-        that.targets.push(this[1])
-      })
-  }
-
-  ScrollSpy.prototype.process = function () {
-    var scrollTop    = this.$scrollElement.scrollTop() + this.options.offset
-    var scrollHeight = this.getScrollHeight()
-    var maxScroll    = this.options.offset + scrollHeight - this.$scrollElement.height()
-    var offsets      = this.offsets
-    var targets      = this.targets
-    var activeTarget = this.activeTarget
-    var i
-
-    if (this.scrollHeight != scrollHeight) {
-      this.refresh()
-    }
-
-    if (scrollTop >= maxScroll) {
-      return activeTarget != (i = targets[targets.length - 1]) && this.activate(i)
-    }
-
-    if (activeTarget && scrollTop < offsets[0]) {
-      this.activeTarget = null
-      return this.clear()
-    }
-
-    for (i = offsets.length; i--;) {
-      activeTarget != targets[i]
-        && scrollTop >= offsets[i]
-        && (offsets[i + 1] === undefined || scrollTop < offsets[i + 1])
-        && this.activate(targets[i])
-    }
-  }
-
-  ScrollSpy.prototype.activate = function (target) {
-    this.activeTarget = target
-
-    this.clear()
-
-    var selector = this.selector +
-      '[data-target="' + target + '"],' +
-      this.selector + '[href="' + target + '"]'
-
-    var active = $(selector)
-      .parents('li')
-      .addClass('active')
-
-    if (active.parent('.dropdown-menu').length) {
-      active = active
-        .closest('li.dropdown')
-        .addClass('active')
-    }
-
-    active.trigger('activate.bs.scrollspy')
-  }
-
-  ScrollSpy.prototype.clear = function () {
-    $(this.selector)
-      .parentsUntil(this.options.target, '.active')
-      .removeClass('active')
-  }
-
-
-  // SCROLLSPY PLUGIN DEFINITION
-  // ===========================
-
-  function Plugin(option) {
-    return this.each(function () {
-      var $this   = $(this)
-      var data    = $this.data('bs.scrollspy')
-      var options = typeof option == 'object' && option
-
-      if (!data) $this.data('bs.scrollspy', (data = new ScrollSpy(this, options)))
-      if (typeof option == 'string') data[option]()
-    })
-  }
-
-  var old = $.fn.scrollspy
-
-  $.fn.scrollspy             = Plugin
-  $.fn.scrollspy.Constructor = ScrollSpy
-
-
-  // SCROLLSPY NO CONFLICT
-  // =====================
-
-  $.fn.scrollspy.noConflict = function () {
-    $.fn.scrollspy = old
-    return this
-  }
-
-
-  // SCROLLSPY DATA-API
-  // ==================
-
-  $(window).on('load.bs.scrollspy.data-api', function () {
-    $('[data-spy="scroll"]').each(function () {
-      var $spy = $(this)
-      Plugin.call($spy, $spy.data())
-    })
-  })
-
-}(jQuery);
-
-/* ========================================================================
- * Bootstrap: tab.js v3.3.7
- * http://getbootstrap.com/javascript/#tabs
- * ========================================================================
- * Copyright 2011-2016 Twitter, Inc.
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
- * ======================================================================== */
-
-
-+function ($) {
-  'use strict';
-
-  // TAB CLASS DEFINITION
-  // ====================
-
-  var Tab = function (element) {
-    // jscs:disable requireDollarBeforejQueryAssignment
-    this.element = $(element)
-    // jscs:enable requireDollarBeforejQueryAssignment
-  }
-
-  Tab.VERSION = '3.3.7'
-
-  Tab.TRANSITION_DURATION = 150
-
-  Tab.prototype.show = function () {
-    var $this    = this.element
-    var $ul      = $this.closest('ul:not(.dropdown-menu)')
-    var selector = $this.data('target')
-
-    if (!selector) {
-      selector = $this.attr('href')
-      selector = selector && selector.replace(/.*(?=#[^\s]*$)/, '') // strip for ie7
-    }
-
-    if ($this.parent('li').hasClass('active')) return
-
-    var $previous = $ul.find('.active:last a')
-    var hideEvent = $.Event('hide.bs.tab', {
-      relatedTarget: $this[0]
-    })
-    var showEvent = $.Event('show.bs.tab', {
-      relatedTarget: $previous[0]
-    })
-
-    $previous.trigger(hideEvent)
-    $this.trigger(showEvent)
-
-    if (showEvent.isDefaultPrevented() || hideEvent.isDefaultPrevented()) return
-
-    var $target = $(selector)
-
-    this.activate($this.closest('li'), $ul)
-    this.activate($target, $target.parent(), function () {
-      $previous.trigger({
-        type: 'hidden.bs.tab',
-        relatedTarget: $this[0]
-      })
-      $this.trigger({
-        type: 'shown.bs.tab',
-        relatedTarget: $previous[0]
-      })
-    })
-  }
-
-  Tab.prototype.activate = function (element, container, callback) {
-    var $active    = container.find('> .active')
-    var transition = callback
-      && $.support.transition
-      && ($active.length && $active.hasClass('fade') || !!container.find('> .fade').length)
-
-    function next() {
-      $active
-        .removeClass('active')
-        .find('> .dropdown-menu > .active')
-          .removeClass('active')
-        .end()
-        .find('[data-toggle="tab"]')
-          .attr('aria-expanded', false)
-
-      element
-        .addClass('active')
-        .find('[data-toggle="tab"]')
-          .attr('aria-expanded', true)
-
-      if (transition) {
-        element[0].offsetWidth // reflow for transition
-        element.addClass('in')
-      } else {
-        element.removeClass('fade')
-      }
-
-      if (element.parent('.dropdown-menu').length) {
-        element
-          .closest('li.dropdown')
-            .addClass('active')
-          .end()
-          .find('[data-toggle="tab"]')
-            .attr('aria-expanded', true)
-      }
-
-      callback && callback()
-    }
-
-    $active.length && transition ?
-      $active
-        .one('bsTransitionEnd', next)
-        .emulateTransitionEnd(Tab.TRANSITION_DURATION) :
-      next()
-
-    $active.removeClass('in')
-  }
-
-
-  // TAB PLUGIN DEFINITION
-  // =====================
-
-  function Plugin(option) {
-    return this.each(function () {
-      var $this = $(this)
-      var data  = $this.data('bs.tab')
-
-      if (!data) $this.data('bs.tab', (data = new Tab(this)))
-      if (typeof option == 'string') data[option]()
-    })
-  }
-
-  var old = $.fn.tab
-
-  $.fn.tab             = Plugin
-  $.fn.tab.Constructor = Tab
-
-
-  // TAB NO CONFLICT
-  // ===============
-
-  $.fn.tab.noConflict = function () {
-    $.fn.tab = old
-    return this
-  }
-
-
-  // TAB DATA-API
-  // ============
-
-  var clickHandler = function (e) {
-    e.preventDefault()
-    Plugin.call($(this), 'show')
-  }
-
-  $(document)
-    .on('click.bs.tab.data-api', '[data-toggle="tab"]', clickHandler)
-    .on('click.bs.tab.data-api', '[data-toggle="pill"]', clickHandler)
-
-}(jQuery);
-
-/* ========================================================================
- * Bootstrap: affix.js v3.3.7
- * http://getbootstrap.com/javascript/#affix
- * ========================================================================
- * Copyright 2011-2016 Twitter, Inc.
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
- * ======================================================================== */
-
-
-+function ($) {
-  'use strict';
-
-  // AFFIX CLASS DEFINITION
-  // ======================
-
-  var Affix = function (element, options) {
-    this.options = $.extend({}, Affix.DEFAULTS, options)
-
-    this.$target = $(this.options.target)
-      .on('scroll.bs.affix.data-api', $.proxy(this.checkPosition, this))
-      .on('click.bs.affix.data-api',  $.proxy(this.checkPositionWithEventLoop, this))
-
-    this.$element     = $(element)
-    this.affixed      = null
-    this.unpin        = null
-    this.pinnedOffset = null
-
-    this.checkPosition()
-  }
-
-  Affix.VERSION  = '3.3.7'
-
-  Affix.RESET    = 'affix affix-top affix-bottom'
-
-  Affix.DEFAULTS = {
-    offset: 0,
-    target: window
-  }
-
-  Affix.prototype.getState = function (scrollHeight, height, offsetTop, offsetBottom) {
-    var scrollTop    = this.$target.scrollTop()
-    var position     = this.$element.offset()
-    var targetHeight = this.$target.height()
-
-    if (offsetTop != null && this.affixed == 'top') return scrollTop < offsetTop ? 'top' : false
-
-    if (this.affixed == 'bottom') {
-      if (offsetTop != null) return (scrollTop + this.unpin <= position.top) ? false : 'bottom'
-      return (scrollTop + targetHeight <= scrollHeight - offsetBottom) ? false : 'bottom'
-    }
-
-    var initializing   = this.affixed == null
-    var colliderTop    = initializing ? scrollTop : position.top
-    var colliderHeight = initializing ? targetHeight : height
-
-    if (offsetTop != null && scrollTop <= offsetTop) return 'top'
-    if (offsetBottom != null && (colliderTop + colliderHeight >= scrollHeight - offsetBottom)) return 'bottom'
-
-    return false
-  }
-
-  Affix.prototype.getPinnedOffset = function () {
-    if (this.pinnedOffset) return this.pinnedOffset
-    this.$element.removeClass(Affix.RESET).addClass('affix')
-    var scrollTop = this.$target.scrollTop()
-    var position  = this.$element.offset()
-    return (this.pinnedOffset = position.top - scrollTop)
-  }
-
-  Affix.prototype.checkPositionWithEventLoop = function () {
-    setTimeout($.proxy(this.checkPosition, this), 1)
-  }
-
-  Affix.prototype.checkPosition = function () {
-    if (!this.$element.is(':visible')) return
-
-    var height       = this.$element.height()
-    var offset       = this.options.offset
-    var offsetTop    = offset.top
-    var offsetBottom = offset.bottom
-    var scrollHeight = Math.max($(document).height(), $(document.body).height())
-
-    if (typeof offset != 'object')         offsetBottom = offsetTop = offset
-    if (typeof offsetTop == 'function')    offsetTop    = offset.top(this.$element)
-    if (typeof offsetBottom == 'function') offsetBottom = offset.bottom(this.$element)
-
-    var affix = this.getState(scrollHeight, height, offsetTop, offsetBottom)
-
-    if (this.affixed != affix) {
-      if (this.unpin != null) this.$element.css('top', '')
-
-      var affixType = 'affix' + (affix ? '-' + affix : '')
-      var e         = $.Event(affixType + '.bs.affix')
-
-      this.$element.trigger(e)
-
-      if (e.isDefaultPrevented()) return
-
-      this.affixed = affix
-      this.unpin = affix == 'bottom' ? this.getPinnedOffset() : null
-
-      this.$element
-        .removeClass(Affix.RESET)
-        .addClass(affixType)
-        .trigger(affixType.replace('affix', 'affixed') + '.bs.affix')
-    }
-
-    if (affix == 'bottom') {
-      this.$element.offset({
-        top: scrollHeight - height - offsetBottom
-      })
-    }
-  }
-
-
-  // AFFIX PLUGIN DEFINITION
-  // =======================
-
-  function Plugin(option) {
-    return this.each(function () {
-      var $this   = $(this)
-      var data    = $this.data('bs.affix')
-      var options = typeof option == 'object' && option
-
-      if (!data) $this.data('bs.affix', (data = new Affix(this, options)))
-      if (typeof option == 'string') data[option]()
-    })
-  }
-
-  var old = $.fn.affix
-
-  $.fn.affix             = Plugin
-  $.fn.affix.Constructor = Affix
-
-
-  // AFFIX NO CONFLICT
-  // =================
-
-  $.fn.affix.noConflict = function () {
-    $.fn.affix = old
-    return this
-  }
-
-
-  // AFFIX DATA-API
-  // ==============
-
-  $(window).on('load', function () {
-    $('[data-spy="affix"]').each(function () {
-      var $spy = $(this)
-      var data = $spy.data()
-
-      data.offset = data.offset || {}
-
-      if (data.offsetBottom != null) data.offset.bottom = data.offsetBottom
-      if (data.offsetTop    != null) data.offset.top    = data.offsetTop
-
-      Plugin.call($spy, data)
-    })
-  })
-
-}(jQuery);
-
+});
 
 /***/ }),
 
@@ -14526,6 +14442,36 @@ module.exports = function normalizeComponent (
 
 /***/ }),
 
+/***/ "./node_modules/vue-loader/lib/template-compiler/index.js?{\"id\":\"data-v-15a2a63e\"}!./node_modules/vue-loader/lib/selector.js?type=template&index=0!./resources/assets/js/components/FormularioDeReservas.vue":
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
+  return _vm._m(0)
+},staticRenderFns: [function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
+  return _c('div', {
+    staticClass: "container"
+  }, [_c('div', {
+    staticClass: "row"
+  }, [_c('div', {
+    staticClass: "col-md-8 col-md-offset-2"
+  }, [_c('div', {
+    staticClass: "panel panel-default"
+  }, [_c('div', {
+    staticClass: "panel-heading"
+  }, [_vm._v("Example Component")]), _vm._v(" "), _c('div', {
+    staticClass: "panel-body"
+  }, [_vm._v("\n                    I'm an example component!\n                ")])])])])])
+}]}
+module.exports.render._withStripped = true
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+     require("vue-hot-reload-api").rerender("data-v-15a2a63e", module.exports)
+  }
+}
+
+/***/ }),
+
 /***/ "./node_modules/vue-loader/lib/template-compiler/index.js?{\"id\":\"data-v-4e6fabc7\"}!./node_modules/vue-loader/lib/selector.js?type=template&index=0!./resources/assets/js/components/Example.vue":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -23932,6 +23878,7 @@ __webpack_require__("./resources/assets/js/bootstrap.js");
  */
 
 Vue.component('example', __webpack_require__("./resources/assets/js/components/Example.vue"));
+Vue.component('formulario_de_reservas', __webpack_require__("./resources/assets/js/components/FormularioDeReservas.vue"));
 
 var app = new Vue({
   el: '#app'
@@ -23954,8 +23901,8 @@ window.Vue = __WEBPACK_IMPORTED_MODULE_0_vue___default.a;
 window.axios = axios;
 
 window.$ = window.jQuery = __webpack_require__("./node_modules/jquery/dist/jquery.js");
-
-__webpack_require__("./node_modules/bootstrap-sass/assets/javascripts/bootstrap.js");
+__webpack_require__("./node_modules/air-datepicker/src/js/air-datepicker.js");
+// require('bootstrap-sass');
 
 /**
  * Vue is a modern JavaScript library for building interactive web interfaces
@@ -24022,6 +23969,41 @@ if (false) {(function () {
     hotAPI.createRecord("data-v-4e6fabc7", Component.options)
   } else {
     hotAPI.reload("data-v-4e6fabc7", Component.options)
+  }
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+
+/***/ "./resources/assets/js/components/FormularioDeReservas.vue":
+/***/ (function(module, exports, __webpack_require__) {
+
+var Component = __webpack_require__("./node_modules/vue-loader/lib/component-normalizer.js")(
+  /* script */
+  __webpack_require__("./node_modules/babel-loader/lib/index.js?{\"cacheDirectory\":true,\"presets\":[[\"env\",{\"modules\":false,\"targets\":{\"browsers\":[\"> 2%\"],\"uglify\":true}}]]}!./node_modules/vue-loader/lib/selector.js?type=script&index=0!./resources/assets/js/components/FormularioDeReservas.vue"),
+  /* template */
+  __webpack_require__("./node_modules/vue-loader/lib/template-compiler/index.js?{\"id\":\"data-v-15a2a63e\"}!./node_modules/vue-loader/lib/selector.js?type=template&index=0!./resources/assets/js/components/FormularioDeReservas.vue"),
+  /* scopeId */
+  null,
+  /* cssModules */
+  null
+)
+Component.options.__file = "/Users/jorgelsaud/Sites/Reservaciones/resources/assets/js/components/FormularioDeReservas.vue"
+if (Component.esModule && Object.keys(Component.esModule).some(function (key) {return key !== "default" && key !== "__esModule"})) {console.error("named exports are not supported in *.vue files.")}
+if (Component.options.functional) {console.error("[vue-loader] FormularioDeReservas.vue: functional components are not supported with templates, they should use render functions.")}
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-15a2a63e", Component.options)
+  } else {
+    hotAPI.reload("data-v-15a2a63e", Component.options)
   }
 })()}
 
