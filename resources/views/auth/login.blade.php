@@ -19,7 +19,9 @@
 		<div class="heading">
 			<form class="form-horizontal" role="form" method="POST" action="{{ route('login') }}">
 				{{ csrf_field() }}
-
+			@foreach($errors as $error)
+				{{$error}}
+			@endforeach
 				
 
 				<div class="field">
