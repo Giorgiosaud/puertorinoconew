@@ -70,8 +70,8 @@
 					</a>
 					@else
 					<a class="nav-item is-tab">
-						<figure class="image is-16x16" style="margin-right: 8px;">
-							<img src="https://www.gravatar.com/avatar/{{md5( strtolower( trim( Auth::user()->email ) ) )}}?s=16.jpg">
+						<figure class="image is-64x64" style="margin-right: 8px;">
+							<img src="https://www.gravatar.com/avatar/{{md5( strtolower( trim( Auth::user()->email ) ) )}}?s=64.jpg">
 						</figure>
 						{{ Auth::user()->name }}
 					</a>
