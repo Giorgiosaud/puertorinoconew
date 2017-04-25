@@ -22,11 +22,11 @@
 				<div class="field">
 					<label class="label">Nombre</label>
 					<p class="control has-icons-left has-icons-right">
-						<input  class="input {{ $errors->has('name') ? 'is-danger' : '' }} " type="text" name="name" placeholder="Nombre" value="{{ old('name') }}" required autofocus>
+						<input  class="input {{ $errors->has('nombre') ? 'is-danger' : '' }} " type="text" name="nombre" placeholder="Nombre" value="{{ old('nombre') }}" required autofocus>
 						<span class="icon is-small is-left">
 							<i class="fa fa-user"></i>
 						</span>
-						@if($errors->has('name'))
+						@if($errors->has('nombre'))
 						<span class="icon is-small is-right">
 							<i class="fa fa-warning"></i>
 						</span>
