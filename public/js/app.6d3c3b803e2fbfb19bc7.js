@@ -23895,7 +23895,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_axios__ = __webpack_require__("./node_modules/axios/index.js");
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_axios___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_axios__);
 
-
+// import Axios from 'axios';
 window.Vue = __WEBPACK_IMPORTED_MODULE_0_vue___default.a;
 window.axios = axios;
 
@@ -23919,6 +23919,7 @@ window.Vue = __webpack_require__("./node_modules/vue/dist/vue.common.js");
 
 window.axios = __webpack_require__("./node_modules/axios/index.js");
 
+window.axios = axios;
 window.axios.defaults.headers.common = {
   'X-CSRF-TOKEN': window.Laravel.csrfToken,
   'X-Requested-With': 'XMLHttpRequest'
