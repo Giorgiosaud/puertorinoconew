@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import Axios from 'axios';
 window.Vue=Vue;
-window.axios=axios;
+window.axios=Axios;
 
 
 window.$ = window.jQuery = require('jquery');

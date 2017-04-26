@@ -23900,7 +23900,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 window.Vue = __WEBPACK_IMPORTED_MODULE_0_vue___default.a;
-window.axios = axios;
+window.axios = __WEBPACK_IMPORTED_MODULE_1_axios___default.a;
 
 window.$ = window.jQuery = __webpack_require__("./node_modules/jquery/dist/jquery.js");
 __webpack_require__("./node_modules/air-datepicker/src/js/air-datepicker.js");
