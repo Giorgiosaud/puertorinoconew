@@ -1,5 +1,5 @@
 import Vue from 'vue';
-// import Axios from 'axios';
+import Axios from 'axios';
 window.Vue=Vue;
 window.axios=axios;
 
@@ -23,8 +23,7 @@ window.Vue = require('vue');
  */
 
 window.axios = require('axios');
-import Axios from 'axios';
-window.axios=axios;
+
 window.axios.defaults.headers.common = {
     'X-CSRF-TOKEN': window.Laravel.csrfToken,
     'X-Requested-With': 'XMLHttpRequest'
