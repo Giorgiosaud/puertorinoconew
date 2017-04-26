@@ -15,7 +15,6 @@ require('./bootstrap');
 
 Vue.component('example', require('./components/Example.vue'));
 Vue.component('formulario-de-reservas', require('./components/FormularioDeReservas.vue'));
-
 const app = new Vue({
     el: '#app'
 });

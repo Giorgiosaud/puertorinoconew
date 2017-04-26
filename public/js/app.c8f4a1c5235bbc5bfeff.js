@@ -23879,7 +23879,6 @@ __webpack_require__("./resources/assets/js/bootstrap.js");
 
 Vue.component('example', __webpack_require__("./resources/assets/js/components/Example.vue"));
 Vue.component('formulario-de-reservas', __webpack_require__("./resources/assets/js/components/FormularioDeReservas.vue"));
-
 var app = new Vue({
   el: '#app'
 });
