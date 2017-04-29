@@ -2,7 +2,7 @@
 @section('content')
 <div class="container">
 	<formulario>
-		<input-date></input-date>
+		<input-date identificador="fechaReserva"></input-date>
 	</formulario>
 </div>
 @endsection
