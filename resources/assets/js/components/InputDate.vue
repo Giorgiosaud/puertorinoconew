@@ -30,7 +30,7 @@
 
 		},
 		mounted(){
-			console.info(props.identificador);
+			console.info(this.identificador);
 			// console.info(this);
 			// if(typeof this.props.identificador === 'undefined'){
 				// $('.makedatepicker').datepicker({
