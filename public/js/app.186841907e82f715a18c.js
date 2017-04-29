@@ -3954,6 +3954,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 		name: {
 			type: String,
 			default: "date"
+		},
+		label: {
+			type: String,
+			default: "Seleccione Fecha"
 		}
 	},
 	mounted: function mounted() {
@@ -14481,7 +14485,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
     staticClass: "field"
   }, [_c('label', {
     staticClass: "label"
-  }, [_vm._v("Name")]), _vm._v(" "), _c('p', {
+  }, [_vm._v(_vm._s(_vm.label))]), _vm._v(" "), _c('p', {
     staticClass: "control"
   }, [_c('input', {
     staticClass: "input",

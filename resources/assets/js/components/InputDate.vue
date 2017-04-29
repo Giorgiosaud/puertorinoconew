@@ -1,6 +1,6 @@
 <template>
 	<div class="field">
-		<label class="label">Name</label>
+		<label class="label">{{label}}</label>
 		<p class="control">
 			<input class="input" :name="name" type="text" placeholder="Text input">
 		</p>
@@ -13,6 +13,10 @@
 			name:{
 				type: String,
 				default:"date"
+			},
+			label:{
+				type: String,
+				default:"Seleccione Fecha"
 			}
 		},
 		mounted() {
