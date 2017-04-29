@@ -3971,11 +3971,11 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 	},
 	mounted: function mounted() {
-		// if(typeof identificador === 'undefined'){
-		$('.makedatepicker').datepicker({
-			language: "es"
-		});
-		// }
+		if (typeof identificador === 'undefined') {
+			$('.makedatepicker').datepicker({
+				language: "es"
+			});
+		}
 	}
 });
 
