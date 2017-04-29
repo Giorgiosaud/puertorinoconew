@@ -3945,8 +3945,14 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 
 /* harmony default export */ __webpack_exports__["default"] = ({
+	props: {
+		name: {
+			type: String,
+			default: "date"
+		}
+	},
 	mounted: function mounted() {
-		console.log('Component mounted.');
+		// console.log('Component mounted.')
 	}
 });
 
@@ -14466,7 +14472,12 @@ module.exports = function normalizeComponent (
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
-  return _c('h1', [_vm._v("DATE")])
+  return _c('input', {
+    attrs: {
+      "type": "text",
+      "name": _vm.name
+    }
+  })
 },staticRenderFns: []}
 module.exports.render._withStripped = true
 if (false) {

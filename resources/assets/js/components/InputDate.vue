@@ -1,11 +1,17 @@
 <template>
-	<h1>DATE</h1>    
+	<input type="text" :name="name">
 </template>
 
 <script>
 	export default {
+		props: {
+            name:{
+                type: String,
+                default:"date"
+            }
+        },
 		mounted() {
-			console.log('Component mounted.')
+			// console.log('Component mounted.')
 		}
 	}
 </script>
