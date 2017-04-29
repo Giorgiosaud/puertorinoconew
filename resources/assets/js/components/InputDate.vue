@@ -31,7 +31,9 @@
 		},
 		created(){
 			if(typeof identificador === 'undefined'){
-				$('.makedatepicker').datepicker();
+				$('.makedatepicker').datepicker({
+					language:"es",
+				});
 			}
 		},
 		mounted() {

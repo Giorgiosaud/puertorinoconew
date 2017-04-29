@@ -6,6 +6,8 @@ window.axios=Axios;
 
 window.$ = window.jQuery = require('jquery');
 require('air-datepicker');
+
+
 // require('bootstrap-sass');
 
 /**
