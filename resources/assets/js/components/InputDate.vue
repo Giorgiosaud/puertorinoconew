@@ -30,11 +30,11 @@
 
 		},
 		created(){
-			if(typeof identificador === 'undefined'){
+			// if(typeof identificador === 'undefined'){
 				$('.makedatepicker').datepicker({
 					language:"es",
 				});
-			}
+			// }
 		},
 		mounted() {
 			// console.log('Component mounted.')
