@@ -30,7 +30,7 @@
 
 		},
 		created(){
-			if(props.identificador!=''){
+			if(typeof identificador !== 'undefined'){
 				$('makedatepicker').datepicker();
 			}
 		},
