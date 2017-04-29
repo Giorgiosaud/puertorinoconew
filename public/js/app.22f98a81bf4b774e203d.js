@@ -3935,56 +3935,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /***/ }),
 
 /***/ "./node_modules/babel-loader/lib/index.js?{\"cacheDirectory\":true,\"presets\":[[\"env\",{\"modules\":false,\"targets\":{\"browsers\":[\"> 2%\"],\"uglify\":true}}]]}!./node_modules/vue-loader/lib/selector.js?type=script&index=0!./resources/assets/js/components/InputDate.vue":
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+/***/ (function(module, exports) {
 
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-//
-//
-//
-//
-//
-//
-//
-//
-//
-
-/* harmony default export */ __webpack_exports__["default"] = ({
-	props: {
-		name: {
-			type: String,
-			default: "date"
-		},
-		label: {
-			type: String,
-			default: "Seleccione Fecha"
-		},
-		clase: {
-			type: String,
-			default: "makedatepicker"
-		},
-		identificador: {
-			type: String,
-			required: false,
-			default: ""
-		}
-
-	},
-	created: function created() {
-		console.info(this.props);
-		if (typeof this.props.identificador === 'undefined') {
-			$('.makedatepicker').datepicker({
-				language: "es"
-			});
-		} else {
-			if (this.props.identificador === "fechaReserva") {
-				$('#' + this.props.identificador).datepicker({
-					language: "en"
-				});
-			}
-		}
-	}
-});
+throw new Error("Module build failed: SyntaxError: Unexpected token, expected ; (46:2)\n\n\u001b[0m \u001b[90m 44 | \u001b[39m\t\t\t\u001b[90m// }\u001b[39m\n \u001b[90m 45 | \u001b[39m\t\t}\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 46 | \u001b[39m\t}\u001b[33m,\u001b[39m\n \u001b[90m    | \u001b[39m\t \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 47 | \u001b[39m\t\n \u001b[90m 48 | \u001b[39m}\n \u001b[90m 49 | \u001b[39m\u001b[0m\n");
 
 /***/ }),
 
