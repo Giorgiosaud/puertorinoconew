@@ -12,17 +12,17 @@
 */
 
 Route::get('/', function () {
-    return view('welcome');
+	return view('welcome');
 });
 Route::group(
 
 	[
 	'prefix' => LaravelLocalization::setLocale(),
 	'middleware' => [ 'localeSessionRedirect', 'localizationRedirect' ]
-	], function()
-{
-	Route::resource(Localize::transRoute('formulario'),'Reservaciones\FormularioController');
-}
+	], function(){
+		Route::resource(LaravelLocalization::transRoute("formulario"),"Reservaciones\FormularioController");
+	}
+	);
 Auth::routes();
 
 Route::get('/home', 'HomeController@index');
