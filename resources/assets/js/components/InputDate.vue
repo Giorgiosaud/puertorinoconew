@@ -2,7 +2,7 @@
 	<div class="field">
 		<label class="label">{{label}}</label>
 		<p class="control">
-			<input class="input" :name="name" type="text" placeholder="Text input">
+			<input class="input" :class="clase" :name="name" type="text" :placeholder="label">
 		</p>
 	</div>
 </template>
@@ -17,7 +17,15 @@
 			label:{
 				type: String,
 				default:"Seleccione Fecha"
+			},
+			clase:{
+				type: String,
+				default:"datepicker"
 			}
+
+		},
+		created(){
+
 		},
 		mounted() {
 			// console.log('Component mounted.')

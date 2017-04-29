@@ -3958,8 +3958,14 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 		label: {
 			type: String,
 			default: "Seleccione Fecha"
+		},
+		clase: {
+			type: String,
+			default: "datepicker"
 		}
+
 	},
+	created: function created() {},
 	mounted: function mounted() {
 		// console.log('Component mounted.')
 	}
@@ -14489,10 +14495,11 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
     staticClass: "control"
   }, [_c('input', {
     staticClass: "input",
+    class: _vm.clase,
     attrs: {
       "name": _vm.name,
       "type": "text",
-      "placeholder": "Text input"
+      "placeholder": _vm.label
     }
   })])])
 },staticRenderFns: []}
