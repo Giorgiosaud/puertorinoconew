@@ -3965,6 +3965,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 		},
 		identificador: {
 			type: String,
+			required: false,
 			default: ""
 		}
 

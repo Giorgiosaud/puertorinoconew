@@ -24,6 +24,7 @@
 			},
 			identificador:{
 				type: String,
+				required:false,
 				default:""
 			}
 
