@@ -3961,7 +3961,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 		},
 		clase: {
 			type: String,
-			default: "datepicker"
+			default: "makedatepicker"
 		}
 
 	},

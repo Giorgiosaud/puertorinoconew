@@ -20,7 +20,7 @@
 			},
 			clase:{
 				type: String,
-				default:"datepicker"
+				default:"makedatepicker"
 			}
 
 		},
