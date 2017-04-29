@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<formulario-de-reservas></formulario-de-reservas>
-<example></example>
+<formulario>
+	<input-date></input-date>
+</formulario>
 @endsection
