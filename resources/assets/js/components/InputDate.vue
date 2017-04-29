@@ -2,7 +2,7 @@
 	<div class="field">
 		<label class="label">{{label}}</label>
 		<p class="control">
-			<input class="input" :class="clase" :name="name" type="text" :placeholder="label">
+			<input class="input" :class="clase" :id="identificador" :name="name" type="text" :placeholder="label">
 		</p>
 	</div>
 </template>
@@ -21,11 +21,17 @@
 			clase:{
 				type: String,
 				default:"makedatepicker"
+			},
+			identificador:{
+				type: String,
+				default:""
 			}
 
 		},
 		created(){
-
+			if(identificador!=''){
+				$('makedatepicker').datepicker();
+			}
 		},
 		mounted() {
 			// console.log('Component mounted.')

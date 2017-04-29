@@ -3962,10 +3962,18 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 		clase: {
 			type: String,
 			default: "makedatepicker"
+		},
+		identificador: {
+			type: String,
+			default: ""
 		}
 
 	},
-	created: function created() {},
+	created: function created() {
+		if (identificador != '') {
+			$('makedatepicker').datepicker();
+		}
+	},
 	mounted: function mounted() {
 		// console.log('Component mounted.')
 	}
@@ -14497,6 +14505,7 @@ module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c
     staticClass: "input",
     class: _vm.clase,
     attrs: {
+      "id": _vm.identificador,
       "name": _vm.name,
       "type": "text",
       "placeholder": _vm.label
