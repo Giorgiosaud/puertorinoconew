@@ -3975,6 +3975,12 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 			$('.makedatepicker').datepicker({
 				language: "es"
 			});
+		} else {
+			if (identificador === "fechaReserva") {
+				$('#makedatepicker').datepicker({
+					language: "en"
+				});
+			}
 		}
 	}
 });

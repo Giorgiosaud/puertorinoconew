@@ -35,6 +35,13 @@
 					language:"es",
 				});
 			}
+			else{
+				if(identificador==="fechaReserva"){
+					$('#makedatepicker').datepicker({
+						language:"en",
+					});		
+				}
+			}
 		},
 		
 	}
