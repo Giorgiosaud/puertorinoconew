@@ -3971,7 +3971,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 	},
 	created: function created() {
-		console.info(this.props);
+		console.info(props);
 		// if(typeof this.props.identificador === 'undefined'){
 		// $('.makedatepicker').datepicker({
 		// language:"es",

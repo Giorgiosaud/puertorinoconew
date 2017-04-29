@@ -30,7 +30,7 @@
 
 		},
 		created(){
-			console.info(this.props);
+			console.info(props);
 			// if(typeof this.props.identificador === 'undefined'){
 				// $('.makedatepicker').datepicker({
 					// language:"es",
