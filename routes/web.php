@@ -14,8 +14,15 @@
 Route::get('/', function () {
     return view('welcome');
 });
-Route::resource('formulario','FormularioController');
+Route::group(
 
+	[
+	'prefix' => LaravelLocalization::setLocale(),
+	'middleware' => [ 'localeSessionRedirect', 'localizationRedirect' ]
+	], function()
+{
+	Route::resource(Localize::transRoute('formulario'),'Reservaciones\FormularioController');
+}
 Auth::routes();
 
 Route::get('/home', 'HomeController@index');
