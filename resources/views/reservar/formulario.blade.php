@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
 <formulario method="GET">
-	<input-date></input-date>
+	<inputDate></inputDate>
 </formulario>
 @endsection
