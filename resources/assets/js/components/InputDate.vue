@@ -30,6 +30,7 @@
 
 		},
 		mounted(){
+			console.info(identificador);
 			if(typeof identificador === 'undefined'){
 				$('.makedatepicker').datepicker({
 					language:"es",
@@ -37,7 +38,7 @@
 			}
 			else{
 				if(identificador==="fechaReserva"){
-					$('#makedatepicker').datepicker({
+					$('#'+identificador).datepicker({
 						language:"en",
 					});		
 				}
