@@ -31,7 +31,7 @@
 		},
 		created(){
 			if(typeof identificador === 'undefined'){
-				$('makedatepicker').datepicker();
+				$('.makedatepicker').datepicker();
 			}
 		},
 		mounted() {
