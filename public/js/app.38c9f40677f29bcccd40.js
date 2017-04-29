@@ -23933,6 +23933,26 @@ module.exports = g;
 
 /***/ }),
 
+/***/ "./resources/assets/js/air-datepicker/i18n/datepicker.en.js":
+/***/ (function(module, exports) {
+
+;(function ($) {
+    $.fn.datepicker.language['en'] = {
+        days: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+        daysShort: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+        daysMin: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
+        months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+        monthsShort: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        today: 'Today',
+        clear: 'Clear',
+        dateFormat: 'mm/dd/yyyy',
+        timeFormat: 'hh:ii aa',
+        firstDay: 0
+    };
+})(jQuery);
+
+/***/ }),
+
 /***/ "./resources/assets/js/app.js":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -23976,6 +23996,7 @@ window.axios = __WEBPACK_IMPORTED_MODULE_1_axios___default.a;
 
 window.$ = window.jQuery = __webpack_require__("./node_modules/jquery/dist/jquery.js");
 __webpack_require__("./node_modules/air-datepicker/src/js/air-datepicker.js");
+__webpack_require__("./resources/assets/js/air-datepicker/i18n/datepicker.en.js");
 
 // require('bootstrap-sass');
 

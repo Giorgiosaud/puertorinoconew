@@ -11,9 +11,10 @@ let mix = require('laravel-mix');
  |
  */
 
-mix.js('resources/assets/js/app.js', 'public/js')
-   .sass('resources/assets/sass/app.scss', 'public/css')
-   .version();
+ mix.js('resources/assets/js/app.js', 'public/js')
+ 	.copy('node_modules/air-datepicker/dist/js/i18n','resources/assets/js/air-datepicker/i18n')
+ 	.sass('resources/assets/sass/app.scss', 'public/css')
+ 	.version();
 
 // Full API
 // mix.js(src, output);
