@@ -23953,6 +23953,46 @@ module.exports = g;
 
 /***/ }),
 
+/***/ "./resources/assets/js/air-datepicker/i18n/datepicker.es.js":
+/***/ (function(module, exports) {
+
+;(function ($) {
+    $.fn.datepicker.language['es'] = {
+        days: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],
+        daysShort: ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'],
+        daysMin: ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'],
+        months: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Augosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
+        monthsShort: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+        today: 'Hoy',
+        clear: 'Limpiar',
+        dateFormat: 'dd/mm/yyyy',
+        timeFormat: 'hh:ii aa',
+        firstDay: 1
+    };
+})(jQuery);
+
+/***/ }),
+
+/***/ "./resources/assets/js/air-datepicker/i18n/datepicker.pt-BR.js":
+/***/ (function(module, exports) {
+
+;(function ($) {
+    $.fn.datepicker.language['pt-BR'] = {
+        days: ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'],
+        daysShort: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'],
+        daysMin: ['Do', 'Se', 'Te', 'Qu', 'Qu', 'Se', 'Sa'],
+        months: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
+        monthsShort: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+        today: 'Hoje',
+        clear: 'Limpar',
+        dateFormat: 'dd/mm/yyyy',
+        timeFormat: 'hh:ii',
+        firstDay: 0
+    };
+})(jQuery);
+
+/***/ }),
+
 /***/ "./resources/assets/js/app.js":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -23997,7 +24037,8 @@ window.axios = __WEBPACK_IMPORTED_MODULE_1_axios___default.a;
 window.$ = window.jQuery = __webpack_require__("./node_modules/jquery/dist/jquery.js");
 __webpack_require__("./node_modules/air-datepicker/src/js/air-datepicker.js");
 __webpack_require__("./resources/assets/js/air-datepicker/i18n/datepicker.en.js");
-
+__webpack_require__("./resources/assets/js/air-datepicker/i18n/datepicker.es.js");
+__webpack_require__("./resources/assets/js/air-datepicker/i18n/datepicker.pt-BR.js");
 // require('bootstrap-sass');
 
 /**
