@@ -6,9 +6,15 @@
 
 <script>
     export default {
+        props: {
+            method:{
+                type: String,
+                default:"POST"
+            }
+        },
         data(){
             return {
-                method:"POST"
+                
             };
         },
         mounted() {
