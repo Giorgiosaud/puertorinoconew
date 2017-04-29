@@ -6,7 +6,9 @@
 // @import "variables";
 
 // Bootstrap
+@import "node_modules/air-datepicker/src/sass/cell";
 @import "node_modules/air-datepicker/src/sass/datepicker";
 @import "node_modules/air-datepicker/src/sass/navigation";
 @import "node_modules/air-datepicker/src/sass/timepicker";
+
 @import "node_modules/bulma/bulma";
