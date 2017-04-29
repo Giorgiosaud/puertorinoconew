@@ -29,8 +29,9 @@
 			}
 
 		},
-		created(){
+		mounted(){
 			console.info(props);
+			console.info(this);
 			// if(typeof this.props.identificador === 'undefined'){
 				// $('.makedatepicker').datepicker({
 					// language:"es",

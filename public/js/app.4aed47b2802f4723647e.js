@@ -3970,8 +3970,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 		}
 
 	},
-	created: function created() {
+	mounted: function mounted() {
 		console.info(props);
+		console.info(this);
 		// if(typeof this.props.identificador === 'undefined'){
 		// $('.makedatepicker').datepicker({
 		// language:"es",
