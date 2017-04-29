@@ -29,8 +29,8 @@
 			}
 
 		},
-		mounted(){
-			console.info($props.identificador);
+		created(){
+			console.info(identificador);
 			if(typeof identificador === 'undefined'){
 				$('.makedatepicker').datepicker({
 					language:"es",
