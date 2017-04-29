@@ -31,19 +31,18 @@
 		},
 		mounted(){
 			console.info(this.identificador);
-			// console.info(this);
-			// if(typeof this.props.identificador === 'undefined'){
-				// $('.makedatepicker').datepicker({
-					// language:"es",
-				// });
-			// }
-			// else{
-				// if(this.props.identificador==="fechaReserva"){
-					// $('#'+this.props.identificador).datepicker({
-						// language:"en",
-					// });		
-				// }
-			// }
+			if(typeof this.identificador === 'undefined'){
+				$('.makedatepicker').datepicker({
+					language:"es",
+				});
+			}
+			else{
+				if(this.identificador==="fechaReserva"){
+					$('#'+this.identificador).datepicker({
+						language:"en",
+					});		
+				}
+			}
 		},
 		
 	}
