@@ -31,14 +31,14 @@
 		},
 		created(){
 			console.info(this.props.identificador);
-			if(typeof identificador === 'undefined'){
+			if(typeof this.props.identificador === 'undefined'){
 				$('.makedatepicker').datepicker({
 					language:"es",
 				});
 			}
 			else{
-				if(identificador==="fechaReserva"){
-					$('#'+identificador).datepicker({
+				if(this.props.identificador==="fechaReserva"){
+					$('#'+this.props.identificador).datepicker({
 						language:"en",
 					});		
 				}
