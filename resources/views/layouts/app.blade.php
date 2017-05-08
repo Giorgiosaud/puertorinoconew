@@ -22,7 +22,7 @@
 	</head>
 	<body>
 		<div id="app">
-			<nav class="nav">
+			<nav class="nav is-blue">
 				<div class="nav-left">
 					<a class="nav-item">
 						<img src="/img/logo.png" alt="Logo puertorinoco">
