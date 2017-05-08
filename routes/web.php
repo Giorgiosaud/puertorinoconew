@@ -20,7 +20,7 @@ Route::group(
 	'prefix' => LaravelLocalization::setLocale(),
 	'middleware' => [ 'localeSessionRedirect', 'localizationRedirect' ]
 	], function(){
-		Route::resource(LaravelLocalization::transRoute("formulario"),"Reservaciones\FormularioController");
+		Route::resource(LaravelLocalization 	::transRoute("formulario"),"Reservaciones\FormularioController");
 	}
 	);
 Auth::routes();
