@@ -40,6 +40,11 @@
 							<i class="fa fa-instagram"></i>
 						</span>
 					</a>
+					<a class="nav-item" href="http://puertorinoco.com/">
+						<span class="icon">
+							<i class="fa fa-external-link"></i>
+						</span>
+					</a>
 					<a class="nav-item" href="http://twitter.com/puertorinoco">
 						<span class="icon">
 							<i class="fa fa-twitter"></i>
